@@ -1,4 +1,5 @@
 using HospitalManagementSystem.Data;
+using HospitalManagementSystem.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,10 @@ builder.Services.AddControllersWithViews();
 
 // Register DbConnectionHelper for Dependency Injection
 builder.Services.AddSingleton<DbConnectionHelper>();
+builder.Services.AddScoped<AdminRepository>();
+builder.Services.AddScoped<PatientRepository>();
+builder.Services.AddScoped<DoctorRepository>();
+builder.Services.AddScoped<AppointmentRepository>();
 
 var app = builder.Build();
 
