@@ -173,5 +173,24 @@ ORDER BY a.AppointmentDateTime ASC;";
                 DoctorName = GetNullableString(reader, "DoctorName")
             };
         }
+
+        public async Task<int> GetTotalCountAsync()
+        {
+            try
+            {
+                const string query = @"SELECT COUNT(1) FROM Appointments;";
+                await using SqlConnection connection = CreateConnection();
+                await connection.OpenAsync();
+
+                await using SqlCommand command = new SqlCommand(query, connection);
+                object? result = await command.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error fetching Appointment count: {ex.Message}");
+                return 0;
+            }
+        }
     }
 }

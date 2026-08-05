@@ -167,5 +167,24 @@ ORDER BY FullName;";
                 CreatedAt = GetDateTime(reader, "CreatedAt")
             };
         }
+
+        public async Task<int> GetTotalCountAsync()
+        {
+            try
+            {
+                const string query = @"SELECT COUNT(1) FROM Doctors;";
+                await using SqlConnection connection = CreateConnection();
+                await connection.OpenAsync();
+
+                await using SqlCommand command = new SqlCommand(query, connection);
+                object? result = await command.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error fetching Doctor count: {ex.Message}");
+                return 0;
+            }
+        }
     }
 }

@@ -8,11 +8,22 @@ namespace HospitalManagementSystem.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            // Security: Redirect unauthenticated users back to login page
+            if (HttpContext.Session.GetString("AdminUser") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Redirect authenticated users straight to the new Dashboard Milestone
+            return RedirectToAction("Index", "Dashboard");
         }
 
         public IActionResult Privacy()
         {
+            if (HttpContext.Session.GetString("AdminUser") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
             return View();
         }
 

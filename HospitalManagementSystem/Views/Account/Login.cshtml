@@ -1,0 +1,63 @@
+@model HospitalManagementSystem.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Admin Login - Hospital Management System";
+    // We do not want the standard layout nav bar for the login page
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- We are using the local Bootstrap CSS configured in Milestone 1 -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 mt-5">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">Control Panel Login</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <form asp-controller="Account" asp-action="Login" method="post">
+                        <!-- Validation summary displays database login errors -->
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Username" class="form-label font-weight-bold"></label>
+                            <input asp-for="Username" class="form-control" placeholder="Enter username (admin)" />
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Password" class="form-label font-weight-bold"></label>
+                            <input asp-for="Password" class="form-control" placeholder="Enter password (admin123)" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">Login Securely</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+            <p class="text-center mt-3 text-muted small">&copy; 2026 Hospital Management System Mini-Project</p>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+<script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>
