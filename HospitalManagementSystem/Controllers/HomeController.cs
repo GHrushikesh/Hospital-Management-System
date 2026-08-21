@@ -1,3 +1,4 @@
+using HospitalManagementSystem.Data.Repositories;
 using HospitalManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -6,9 +7,34 @@ namespace HospitalManagementSystem.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+        private readonly PatientRepository _patientRepository;
+        private readonly DoctorRepository _doctorRepository;
+        private readonly AppointmentRepository _appointmentRepository;
+
+        public HomeController(PatientRepository patientRepository, DoctorRepository doctorRepository, AppointmentRepository appointmentRepository)
         {
-            return View();
+            _patientRepository = patientRepository;
+            _doctorRepository = doctorRepository;
+            _appointmentRepository = appointmentRepository;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var viewModel = new DashboardViewModel();
+
+            try
+            {
+                viewModel.PatientCount = (await _patientRepository.GetAllAsync()).Count;
+                viewModel.DoctorCount = (await _doctorRepository.GetAllAsync()).Count;
+                viewModel.AppointmentCount = (await _appointmentRepository.GetHistoryAsync()).Count;
+                viewModel.TodayAppointments = await _appointmentRepository.GetTodayAppointmentsAsync();
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = ex.Message;
+            }
+
+            return View(viewModel);
         }
 
         public IActionResult Privacy()
