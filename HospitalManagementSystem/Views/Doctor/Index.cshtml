@@ -1,0 +1,31 @@
+@model IEnumerable<HospitalManagementSystem.Models.Doctor>
+@{
+    ViewData["Title"] = "Doctors";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Doctors</h2>
+    <a asp-action="Create" class="btn btn-primary">Add Doctor</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Specialty</th>
+            <th>Phone</th>
+            <th>Fee</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var doctor in Model)
+        {
+            <tr>
+                <td>@doctor.FullName</td>
+                <td>@doctor.Specialty</td>
+                <td>@doctor.PhoneNumber</td>
+                <td>@doctor.ConsultationFee</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,48 @@
+@model HospitalManagementSystem.Models.Patient
+@{
+    ViewData["Title"] = "Add Patient";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Add Patient</h3>
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Gender" class="form-label"></label>
+                            <input asp-for="Gender" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="BloodGroup" class="form-label"></label>
+                            <input asp-for="BloodGroup" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label"></label>
+                            <textarea asp-for="Address" class="form-control"></textarea>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-3" type="submit">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

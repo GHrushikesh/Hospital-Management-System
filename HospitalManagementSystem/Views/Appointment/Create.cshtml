@@ -1,0 +1,38 @@
+@model HospitalManagementSystem.Models.Appointment
+@{
+    ViewData["Title"] = "Book Appointment";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Book Appointment</h3>
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Patient</label>
+                        <select asp-for="PatientId" class="form-select" asp-items="@(new SelectList(ViewBag.Patients, "PatientId", "FirstName"))"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Doctor</label>
+                        <select asp-for="DoctorId" class="form-select" asp-items="@(new SelectList(ViewBag.Doctors, "DoctorId", "FullName"))"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="AppointmentDateTime" class="form-label"></label>
+                        <input asp-for="AppointmentDateTime" class="form-control" type="datetime-local" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Reason" class="form-label"></label>
+                        <input asp-for="Reason" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
