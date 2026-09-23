@@ -1,4 +1,4 @@
-@model IEnumerable<HospitalManagementSystem.Models.Doctor>
+﻿@model IEnumerable<HospitalManagementSystem.Models.Doctor>
 @{
     ViewData["Title"] = "Doctors";
 }
@@ -8,23 +8,93 @@
     <a asp-action="Create" class="btn btn-primary">Add Doctor</a>
 </div>
 
-<table class="table table-striped">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Search Box -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-2 align-items-center">
+            <div class="col-md-8 col-sm-12">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Search by name, specialty, or phone number..." />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+            {
+                <div class="col-auto">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped align-middle">
     <thead>
         <tr>
             <th>Name</th>
             <th>Specialty</th>
             <th>Phone</th>
             <th>Fee</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var doctor in Model)
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var doctor in Model)
+            {
+                <tr>
+                    <td>@doctor.FullName</td>
+                    <td>@doctor.Specialty</td>
+                    <td>@(string.IsNullOrEmpty(doctor.PhoneNumber) ? "-" : doctor.PhoneNumber)</td>
+                    <td>@doctor.ConsultationFee.ToString("C")</td>
+                    <td>
+                        @if (doctor.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@doctor.DoctorId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@doctor.DoctorId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete Dr. @doctor.FullName?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@doctor.FullName</td>
-                <td>@doctor.Specialty</td>
-                <td>@doctor.PhoneNumber</td>
-                <td>@doctor.ConsultationFee</td>
+                <td colspan="6" class="text-center text-muted py-4">
+                    @(string.IsNullOrEmpty(ViewBag.SearchTerm as string) ? "No doctors registered yet." : "No doctors found matching your search criteria.")
+                </td>
             </tr>
         }
     </tbody>

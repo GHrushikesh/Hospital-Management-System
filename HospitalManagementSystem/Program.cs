@@ -42,5 +42,10 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+// Automatic Database Initialization (Ensures HospitalDb & tables exist)
+using (var scope = app.Services.CreateScope())
+{
+    DatabaseInitializer.Initialize(scope.ServiceProvider);
+}
 
 app.Run();

@@ -1,4 +1,4 @@
-@model IEnumerable<HospitalManagementSystem.Models.Appointment>
+﻿@model IEnumerable<HospitalManagementSystem.Models.Appointment>
 @{
     ViewData["Title"] = "Appointments";
 }
@@ -8,23 +8,81 @@
     <a asp-action="Create" class="btn btn-primary">Book Appointment</a>
 </div>
 
-<table class="table table-striped">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<table class="table table-striped align-middle">
     <thead>
         <tr>
             <th>Patient</th>
             <th>Doctor</th>
-            <th>Date</th>
+            <th>Date & Time</th>
+            <th>Reason</th>
             <th>Status</th>
+            <th class="text-end">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var appointment in Model)
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var appointment in Model)
+            {
+                <tr>
+                    <td>@appointment.PatientName</td>
+                    <td>@appointment.DoctorName</td>
+                    <td>@appointment.AppointmentDateTime.ToString("g")</td>
+                    <td>@appointment.Reason</td>
+                    <td>
+                        @switch (appointment.Status)
+                        {
+                            case "Completed":
+                                <span class="badge bg-success">Completed</span>
+                                break;
+                            case "Cancelled":
+                                <span class="badge bg-danger">Cancelled</span>
+                                break;
+                            case "In Progress":
+                                <span class="badge bg-info text-dark">In Progress</span>
+                                break;
+                            default:
+                                <span class="badge bg-warning text-dark">Scheduled</span>
+                                break;
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@appointment.AppointmentId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        @if (!string.Equals(appointment.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-outline-secondary" disabled>Cancelled</button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@appointment.PatientName</td>
-                <td>@appointment.DoctorName</td>
-                <td>@appointment.AppointmentDateTime.ToString("g")</td>
-                <td>@appointment.Status</td>
+                <td colspan="6" class="text-center text-muted py-4">No appointments found.</td>
             </tr>
         }
     </tbody>

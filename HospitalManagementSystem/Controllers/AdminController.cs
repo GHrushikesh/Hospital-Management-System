@@ -16,6 +16,11 @@ namespace HospitalManagementSystem.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            if (HttpContext.Session.GetString("AdminAuthenticated") == "true")
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             return View(new AdminLoginViewModel());
         }
 

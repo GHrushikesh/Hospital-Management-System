@@ -1,4 +1,4 @@
-@model IEnumerable<HospitalManagementSystem.Models.Patient>
+﻿@model IEnumerable<HospitalManagementSystem.Models.Patient>
 @{
     ViewData["Title"] = "Patients";
 }
@@ -8,23 +8,84 @@
     <a asp-action="Create" class="btn btn-primary">Add Patient</a>
 </div>
 
-<table class="table table-striped">
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Search Box -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form asp-action="Index" method="get" class="row g-2 align-items-center">
+            <div class="col-md-8 col-sm-12">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Search by name, phone number, or email..." />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+            {
+                <div class="col-auto">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped align-middle">
     <thead>
         <tr>
             <th>Name</th>
             <th>Phone</th>
             <th>Email</th>
             <th>Gender</th>
+            <th>Blood Group</th>
+            <th class="text-end">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var patient in Model)
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var patient in Model)
+            {
+                <tr>
+                    <td>@patient.FirstName @patient.LastName</td>
+                    <td>@patient.PhoneNumber</td>
+                    <td>@(string.IsNullOrEmpty(patient.Email) ? "-" : patient.Email)</td>
+                    <td>@patient.Gender</td>
+                    <td>@(string.IsNullOrEmpty(patient.BloodGroup) ? "-" : patient.BloodGroup)</td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@patient.PatientId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@patient.PatientId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete patient @patient.FirstName @patient.LastName?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@patient.FirstName @patient.LastName</td>
-                <td>@patient.PhoneNumber</td>
-                <td>@patient.Email</td>
-                <td>@patient.Gender</td>
+                <td colspan="6" class="text-center text-muted py-4">
+                    @(string.IsNullOrEmpty(ViewBag.SearchTerm as string) ? "No patients registered yet." : "No patients found matching your search criteria.")
+                </td>
             </tr>
         }
     </tbody>
