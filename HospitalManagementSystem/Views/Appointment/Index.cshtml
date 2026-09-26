@@ -15,6 +15,7 @@
             <th>Doctor</th>
             <th>Date</th>
             <th>Status</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -25,6 +26,13 @@
                 <td>@appointment.DoctorName</td>
                 <td>@appointment.AppointmentDateTime.ToString("g")</td>
                 <td>@appointment.Status</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@appointment.AppointmentId" class="btn btn-sm btn-warning me-2">Edit</a>
+                    <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm('Cancel this appointment?');">Cancel</button>
+                    </form>
+                </td>
             </tr>
         }
     </tbody>
