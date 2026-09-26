@@ -1,0 +1,57 @@
+@model HospitalManagementSystem.Models.Doctor
+@{
+    ViewData["Title"] = "Edit Doctor";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Edit Doctor</h3>
+                <form asp-action="Edit" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input asp-for="DoctorId" type="hidden" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FullName" class="form-label"></label>
+                            <input asp-for="FullName" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Specialty" class="form-label"></label>
+                            <input asp-for="Specialty" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="RoomNumber" class="form-label"></label>
+                            <input asp-for="RoomNumber" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Availability" class="form-label"></label>
+                            <input asp-for="Availability" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ConsultationFee" class="form-label"></label>
+                            <input asp-for="ConsultationFee" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="IsActive" class="form-label"></label>
+                            <select asp-for="IsActive" class="form-select">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mt-3" type="submit">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-secondary mt-3">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
