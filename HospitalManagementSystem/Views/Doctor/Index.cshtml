@@ -5,8 +5,21 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Doctors</h2>
-    <a asp-action="Create" class="btn btn-primary">Add Doctor</a>
+    @if (Context.Session.GetString("LoggedInUserRole") == "Admin")
+    {
+        <a asp-action="Create" class="btn btn-primary">Add Doctor</a>
+    }
 </div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-md-8">
+        <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control" placeholder="Search by name, specialty, or phone" />
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Search</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    </div>
+</form>
 
 <table class="table table-striped">
     <thead>
@@ -15,6 +28,7 @@
             <th>Specialty</th>
             <th>Phone</th>
             <th>Fee</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -25,6 +39,20 @@
                 <td>@doctor.Specialty</td>
                 <td>@doctor.PhoneNumber</td>
                 <td>@doctor.ConsultationFee</td>
+                <td>
+                    @if (Context.Session.GetString("LoggedInUserRole") != null)
+                    {
+                        <a asp-action="Edit" asp-route-id="@doctor.DoctorId" class="btn btn-sm btn-warning me-2">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@doctor.DoctorId" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this doctor?');">Delete</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Appointment" asp-action="GuestRequest" class="btn btn-sm btn-outline-primary">Request appointment</a>
+                    }
+                </td>
             </tr>
         }
     </tbody>

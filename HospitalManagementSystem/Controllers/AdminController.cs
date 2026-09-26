@@ -37,6 +37,8 @@ namespace HospitalManagementSystem.Controllers
 
             HttpContext.Session.SetString("AdminAuthenticated", "true");
             HttpContext.Session.SetString("AdminUsername", user.Username);
+            HttpContext.Session.SetString("LoggedInUserRole", "Admin");
+            HttpContext.Session.SetString("LoggedInUserName", user.Username);
             return RedirectToAction("Index", "Home");
         }
 
