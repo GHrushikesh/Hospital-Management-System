@@ -3,38 +3,53 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<div class="row g-4">
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-2">OPERATIONS OVERVIEW</p>
+        <h1 class="display-title">Hospital operations</h1>
+        <p class="intro-copy">A current view of patients, clinicians, and scheduled care.</p>
+    </div>
+    <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary dashboard-action">Book appointment <span aria-hidden="true">&rarr;</span></a>
+</section>
+
+<div class="row g-3">
     <div class="col-md-4">
-        <div class="card shadow-sm border-0">
+        <div class="card metric-card metric-patients">
             <div class="card-body">
-                <h5 class="card-title">Patients</h5>
-                <p class="display-6">@Model.PatientCount</p>
+                <div class="metric-label"><span class="metric-dot"></span>Registered patients</div>
+                <p class="metric-value">@Model.PatientCount</p>
+                <a asp-controller="Patient" asp-action="Index" class="metric-link">View patient records &rarr;</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card shadow-sm border-0">
+        <div class="card metric-card metric-doctors">
             <div class="card-body">
-                <h5 class="card-title">Doctors</h5>
-                <p class="display-6">@Model.DoctorCount</p>
+            <div class="metric-label"><span class="metric-dot"></span>Medical specialists</div>
+            <p class="metric-value">@Model.DoctorCount</p>
+            <a asp-controller="Doctor" asp-action="Index" class="metric-link">Browse doctor directory &rarr;</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card shadow-sm border-0">
+        <div class="card metric-card metric-appointments">
             <div class="card-body">
-                <h5 class="card-title">Appointments</h5>
-                <p class="display-6">@Model.AppointmentCount</p>
+            <div class="metric-label"><span class="metric-dot"></span>Total appointments</div>
+            <p class="metric-value">@Model.AppointmentCount</p>
+            <a asp-controller="Appointment" asp-action="Index" class="metric-link">Open appointment desk &rarr;</a>
             </div>
         </div>
     </div>
 </div>
 
-<div class="mt-4">
-    <h3>Today's Appointments</h3>
+<div class="schedule-panel mt-5">
+    <div class="section-heading">
+        <div><p class="eyebrow mb-1">LIVE SCHEDULE</p><h2>Today's appointments</h2></div>
+        <span class="schedule-date">@DateTime.Today.ToString("dddd, dd MMMM")</span>
+    </div>
     @if (Model.TodayAppointments.Any())
     {
-        <table class="table table-striped">
+        <div class="table-responsive"><table class="table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Patient</th>
@@ -54,10 +69,10 @@
                     </tr>
                 }
             </tbody>
-        </table>
+        </table></div>
     }
     else
     {
-        <div class="alert alert-info">No appointments for today.</div>
+        <div class="empty-state">Your schedule is clear for today.</div>
     }
 </div>
