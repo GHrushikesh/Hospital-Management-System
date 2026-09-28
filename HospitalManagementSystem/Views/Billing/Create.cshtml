@@ -1,0 +1,114 @@
+@model HospitalManagementSystem.Models.Bill
+
+@{
+    ViewData["Title"] = "Billing - Create";
+    // Ensure model items exist; controller Create GET provides this normally
+    if (Model?.Items == null)
+    {
+        // if model unexpectedly null, create a local list for rendering
+        <text></text>
+    }
+    else
+    {
+        while (Model.Items.Count < 5)
+        {
+            Model.Items.Add(new HospitalManagementSystem.Models.BillItem());
+        }
+    }
+
+    var billDateValue = Model != null && Model.BillDate != default ? Model.BillDate.ToString("yyyy-MM-ddTHH:mm") : string.Empty;
+}
+
+<h1>Create Bill</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="Create" method="post">
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label asp-for="PatientId" class="form-label"></label>
+            <input asp-for="PatientId" class="form-control" />
+            <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="AppointmentId" class="form-label"></label>
+            <input asp-for="AppointmentId" class="form-control" />
+            <span asp-validation-for="AppointmentId" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="DoctorId" class="form-label"></label>
+            <input asp-for="DoctorId" class="form-control" />
+            <span asp-validation-for="DoctorId" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="BillDate" class="form-label"></label>
+            <input asp-for="BillDate" class="form-control" type="datetime-local" value="@billDateValue" />
+            <span asp-validation-for="BillDate" class="text-danger"></span>
+        </div>
+    </div>
+
+    <h5>Items</h5>
+    <table class="table table-bordered mb-3">
+        <thead class="table-light">
+            <tr>
+                <th>Description</th>
+                <th style="width:120px">Quantity</th>
+                <th style="width:160px">Unit Price</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (int i = 0; i < Model.Items.Count; i++)
+        {
+            <tr>
+                <td>
+                    <input asp-for="Items[@i].Description" class="form-control" />
+                </td>
+                <td>
+                    <input asp-for="Items[@i].Quantity" class="form-control" />
+                </td>
+                <td>
+                    <input asp-for="Items[@i].UnitPrice" class="form-control" />
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label asp-for="Tax" class="form-label"></label>
+            <input asp-for="Tax" class="form-control" />
+            <span asp-validation-for="Tax" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Discount" class="form-label"></label>
+            <input asp-for="Discount" class="form-control" />
+            <span asp-validation-for="Discount" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="PaymentStatus" class="form-label"></label>
+            <input asp-for="PaymentStatus" class="form-control" />
+            <span asp-validation-for="PaymentStatus" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="PaymentMethod" class="form-label"></label>
+            <input asp-for="PaymentMethod" class="form-control" />
+            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Bill</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

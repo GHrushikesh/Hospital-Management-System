@@ -18,6 +18,7 @@ builder.Services.AddScoped<AdminRepository>();
 builder.Services.AddScoped<PatientRepository>();
 builder.Services.AddScoped<DoctorRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
+builder.Services.AddScoped<BillingRepository>();
 
 var app = builder.Build();
 
