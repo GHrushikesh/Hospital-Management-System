@@ -13,6 +13,7 @@ builder.Services.AddScoped<PatientRepository>();
 builder.Services.AddScoped<DoctorRepository>();
 builder.Services.AddScoped<AppointmentRepository>();
 builder.Services.AddScoped<BillingRepository>();
+builder.Services.AddScoped<MedicalRecordRepository>();
 
 var app = builder.Build();
 

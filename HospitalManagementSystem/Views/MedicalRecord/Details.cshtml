@@ -1,0 +1,82 @@
+﻿@model HospitalManagementSystem.Models.MedicalRecord
+
+@{
+    ViewData["Title"] = "Medical Record Details";
+}
+
+<h2 class="mb-4">Medical Record Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Record ID</dt>
+            <dd class="col-sm-9">@Model.MedicalRecordId</dd>
+
+            <dt class="col-sm-3">Patient</dt>
+            <dd class="col-sm-9">
+                @Model.PatientName
+                <span class="text-muted">(ID: @Model.PatientId)</span>
+            </dd>
+
+            <dt class="col-sm-3">Doctor</dt>
+            <dd class="col-sm-9">
+                @Model.DoctorName
+                <span class="text-muted">(ID: @Model.DoctorId)</span>
+            </dd>
+
+            <dt class="col-sm-3">Appointment ID</dt>
+            <dd class="col-sm-9">
+                @(Model.AppointmentId?.ToString() ?? "N/A")
+            </dd>
+
+            <dt class="col-sm-3">Record Date</dt>
+            <dd class="col-sm-9">
+                @Model.RecordDate.ToString("dd-MM-yyyy hh:mm tt")
+            </dd>
+
+            <dt class="col-sm-3">Diagnosis</dt>
+            <dd class="col-sm-9">
+                @Model.Diagnosis
+            </dd>
+
+            <dt class="col-sm-3">Treatment</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Treatment)
+                    ? "N/A"
+                    : Model.Treatment)
+            </dd>
+
+            <dt class="col-sm-3">Prescription</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Prescription)
+                    ? "N/A"
+                    : Model.Prescription)
+            </dd>
+
+            <dt class="col-sm-3">Notes</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrWhiteSpace(Model.Notes)
+                    ? "N/A"
+                    : Model.Notes)
+            </dd>
+
+            <dt class="col-sm-3">Created At</dt>
+            <dd class="col-sm-9">
+                @Model.CreatedAt.ToString("dd-MM-yyyy hh:mm tt")
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-action="Edit"
+       asp-route-id="@Model.MedicalRecordId"
+       class="btn btn-warning">
+        Edit
+    </a>
+
+    <a asp-action="Index"
+       class="btn btn-secondary">
+        Back to Records
+    </a>
+</div>
