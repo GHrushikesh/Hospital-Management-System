@@ -1,0 +1,64 @@
+@model IReadOnlyList<HospitalManagementSystem.Models.Bill>
+
+@{
+    ViewData["Title"] = "Billing - Index";
+}
+
+<h1>Billing</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Create New Bill</a>
+</p>
+
+<table class="table table-striped table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>Bill ID</th>
+            <th>Patient ID</th>
+            <th>Appointment ID</th>
+            <th>Doctor ID</th>
+            <th>Bill Date</th>
+            <th>SubTotal</th>
+            <th>Tax</th>
+            <th>Discount</th>
+            <th>Total</th>
+            <th>Payment Status</th>
+            <th>Payment Method</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var bill in Model)
+    {
+        <tr>
+            <td>@bill.BillId</td>
+            <td>@bill.PatientId</td>
+            <td>@(bill.AppointmentId?.ToString() ?? "-")</td>
+            <td>@(bill.DoctorId?.ToString() ?? "-")</td>
+            <td>@bill.BillDate.ToString("yyyy-MM-dd HH:mm")</td>
+            <td>@bill.SubTotal.ToString("F2")</td>
+            <td>@bill.Tax.ToString("F2")</td>
+            <td>@bill.Discount.ToString("F2")</td>
+            <td>@bill.Total.ToString("F2")</td>
+            <td>@bill.PaymentStatus</td>
+            <td>@(bill.PaymentMethod ?? "-")</td>
+            <td>
+                <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@bill.BillId">Details</a>
+                <form asp-action="Delete" method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="@bill.BillId" />
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this bill?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,94 @@
+﻿@model IReadOnlyList<HospitalManagementSystem.Models.MedicalRecord>
+
+@{
+    ViewData["Title"] = "Medical Records";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Medical Records</h2>
+    <a asp-action="Create" class="btn btn-primary">Add Medical Record</a>
+</div>
+
+<form asp-action="Index" method="get" class="row g-2 mb-4">
+    <div class="col-md-8">
+        <input type="text"
+               name="searchTerm"
+               value="@ViewBag.SearchTerm"
+               class="form-control"
+               placeholder="Search by patient, doctor, diagnosis, treatment or prescription" />
+    </div>
+
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">
+            Search
+        </button>
+    </div>
+
+    <div class="col-md-2">
+        <a asp-action="Index" class="btn btn-outline-secondary w-100">
+            Clear
+        </a>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">
+        No medical records found.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Diagnosis</th>
+                    <th>Record Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var record in Model)
+                {
+                    <tr>
+                        <td>@record.MedicalRecordId</td>
+                        <td>@record.PatientName</td>
+                        <td>@record.DoctorName</td>
+                        <td>@record.Diagnosis</td>
+                        <td>@record.RecordDate.ToString("dd-MM-yyyy")</td>
+                        <td>
+                            <a asp-action="Details"
+                               asp-route-id="@record.MedicalRecordId"
+                               class="btn btn-sm btn-info">
+                                Details
+                            </a>
+
+                            <a asp-action="Edit"
+                               asp-route-id="@record.MedicalRecordId"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            <form asp-action="Delete"
+                                  asp-route-id="@record.MedicalRecordId"
+                                  method="post"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to delete this medical record?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

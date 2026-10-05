@@ -1,0 +1,119 @@
+@model HospitalManagementSystem.Models.Bill
+
+@{
+    ViewData["Title"] = "Billing - Details";
+}
+
+<h1>Bill Details</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="mb-3">
+    <a class="btn btn-secondary" asp-action="Index">Back to List</a>
+    <a class="btn btn-primary" asp-action="Create">Create New</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Bill #@Model.BillId</h5>
+        <dl class="row">
+            <dt class="col-sm-3">Patient</dt>
+            <dd class="col-sm-9">@Model.PatientId @if(!string.IsNullOrEmpty(Model.PatientName)){<text>- @Model.PatientName</text>}</dd>
+
+            <dt class="col-sm-3">Appointment</dt>
+            <dd class="col-sm-9">@Model.AppointmentId</dd>
+
+            <dt class="col-sm-3">Doctor</dt>
+            <dd class="col-sm-9">@Model.DoctorId @if(!string.IsNullOrEmpty(Model.DoctorName)){<text>- @Model.DoctorName</text>}</dd>
+
+            <dt class="col-sm-3">Bill Date</dt>
+            <dd class="col-sm-9">@Model.BillDate.ToString("yyyy-MM-dd HH:mm")</dd>
+
+            <dt class="col-sm-3">SubTotal</dt>
+            <dd class="col-sm-9">@Model.SubTotal.ToString("F2")</dd>
+
+            <dt class="col-sm-3">Tax</dt>
+            <dd class="col-sm-9">@Model.Tax.ToString("F2")</dd>
+
+            <dt class="col-sm-3">Discount</dt>
+            <dd class="col-sm-9">@Model.Discount.ToString("F2")</dd>
+
+            <dt class="col-sm-3">Total</dt>
+            <dd class="col-sm-9">@Model.Total.ToString("F2")</dd>
+
+            <dt class="col-sm-3">Payment Status</dt>
+            <dd class="col-sm-9">@Model.PaymentStatus</dd>
+
+            <dt class="col-sm-3">Payment Method</dt>
+            <dd class="col-sm-9">@Model.PaymentMethod</dd>
+
+            <dt class="col-sm-3">Notes</dt>
+            <dd class="col-sm-9">@Model.Notes</dd>
+        </dl>
+    </div>
+</div>
+
+<h4>Items</h4>
+<table class="table table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>#</th>
+            <th>Description</th>
+            <th class="text-end">Quantity</th>
+            <th class="text-end">Unit Price</th>
+            <th class="text-end">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+    @if (Model.Items != null && Model.Items.Count > 0)
+    {
+        int idx = 1;
+        foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@idx</td>
+                <td>@item.Description</td>
+                <td class="text-end">@item.Quantity</td>
+                <td class="text-end">@item.UnitPrice.ToString("F2")</td>
+                <td class="text-end">@item.Amount.ToString("F2")</td>
+            </tr>
+            idx++;
+        }
+    }
+    else
+    {
+        <tr><td colspan="5">No items</td></tr>
+    }
+    </tbody>
+</table>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <h5>Update Payment</h5>
+        <form asp-action="UpdatePaymentStatus" method="post" class="row g-2">
+            <input type="hidden" name="id" value="@Model.BillId" />
+            <div class="col-md-4">
+                <label class="form-label">Payment Status</label>
+                <select name="paymentStatus" class="form-select">
+                    <option value="Unpaid" selected="@( "Unpaid" == Model.PaymentStatus)">Unpaid</option>
+                    <option value="Paid" selected="@( "Paid" == Model.PaymentStatus)">Paid</option>
+                    <option value="Partial" selected="@( "Partial" == Model.PaymentStatus)">Partial</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Payment Method</label>
+                <input name="paymentMethod" value="@Model.PaymentMethod" class="form-control" />
+            </div>
+            <div class="col-md-4 align-self-end">
+                <button type="submit" class="btn btn-success">Update Payment</button>
+            </div>
+        </form>
+    </div>
+</div>

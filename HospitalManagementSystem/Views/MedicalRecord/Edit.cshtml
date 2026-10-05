@@ -1,0 +1,101 @@
+﻿@model HospitalManagementSystem.Models.MedicalRecord
+
+@{
+    ViewData["Title"] = "Edit Medical Record";
+}
+
+<h2 class="mb-4">Edit Medical Record</h2>
+
+<form asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="MedicalRecordId" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="PatientId" class="form-label">Patient ID</label>
+            <input asp-for="PatientId" class="form-control" />
+            <span asp-validation-for="PatientId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="DoctorId" class="form-label">Doctor ID</label>
+            <input asp-for="DoctorId" class="form-control" />
+            <span asp-validation-for="DoctorId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="AppointmentId" class="form-label">
+                Appointment ID
+            </label>
+            <input asp-for="AppointmentId" class="form-control" />
+            <span asp-validation-for="AppointmentId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="RecordDate" class="form-label">
+                Record Date
+            </label>
+            <input asp-for="RecordDate"
+                   type="datetime-local"
+                   class="form-control" />
+            <span asp-validation-for="RecordDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 mb-3">
+            <label asp-for="Diagnosis" class="form-label">
+                Diagnosis
+            </label>
+            <textarea asp-for="Diagnosis"
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="Diagnosis" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 mb-3">
+            <label asp-for="Treatment" class="form-label">
+                Treatment
+            </label>
+            <textarea asp-for="Treatment"
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="Treatment" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 mb-3">
+            <label asp-for="Prescription" class="form-label">
+                Prescription
+            </label>
+            <textarea asp-for="Prescription"
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="Prescription" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 mb-3">
+            <label asp-for="Notes" class="form-label">
+                Notes
+            </label>
+            <textarea asp-for="Notes"
+                      class="form-control"
+                      rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Update Medical Record
+    </button>
+
+    <a asp-action="Details"
+       asp-route-id="@Model.MedicalRecordId"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
