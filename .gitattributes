@@ -1,0 +1,7 @@
+# Tell GitHub Linguist to treat vendor/third-party frontend libraries as vendored
+HospitalManagementSystem/wwwroot/lib/** linguist-vendored
+
+# Treat minified files and source maps as generated
+*.min.js linguist-generated
+*.min.css linguist-generated
+*.map linguist-generated
