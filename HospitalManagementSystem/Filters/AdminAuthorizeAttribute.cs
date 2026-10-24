@@ -8,10 +8,14 @@ namespace HospitalManagementSystem.Filters
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var isAuthenticated = context.HttpContext.Session.GetString("AdminAuthenticated");
-            if (string.IsNullOrEmpty(isAuthenticated) || isAuthenticated != "true")
+            var isAdmin = context.HttpContext.Session.GetString("AdminAuthenticated") == "true";
+            var isStaff = !string.IsNullOrWhiteSpace(context.HttpContext.Session.GetString("LoggedInUserRole"));
+            if (!isAdmin && !isStaff)
             {
-                context.Result = new RedirectToActionResult("Login", "Admin", null);
+                context.Result = new RedirectToActionResult("Login", "Account", new
+                {
+                    returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString
+                });
             }
         }
     }

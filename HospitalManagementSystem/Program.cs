@@ -15,6 +15,7 @@ builder.Services.AddSession(options =>
 // Register DbConnectionHelper for Dependency Injection
 builder.Services.AddSingleton<DbConnectionHelper>();
 builder.Services.AddScoped<AdminRepository>();
+builder.Services.AddScoped<StaffRepository>();
 builder.Services.AddScoped<PatientRepository>();
 builder.Services.AddScoped<DoctorRepository>();
 builder.Services.AddScoped<AppointmentRepository>();

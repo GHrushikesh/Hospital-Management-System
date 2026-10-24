@@ -33,12 +33,22 @@
                             <a class="nav-link" asp-area="" asp-controller="Doctor" asp-action="Index">Doctors</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Appointment" asp-action="Index">Appointments</a>
+                            <a class="nav-link" asp-area="" asp-controller="Appointment" asp-action="GuestRequest">Book appointment</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Staff" asp-action="Login">Staff</a>
                         </li>
                     </ul>
 
                     <div class="d-flex align-items-center gap-2 ms-3">
-                        @if (Context.Session.GetString("AdminAuthenticated") == "true")
+                        @if (Context.Session.GetString("LoggedInUserName") is not null)
+                        {
+                            <span class="user-pill">
+                                @Context.Session.GetString("LoggedInUserRole") : @Context.Session.GetString("LoggedInUserName")
+                            </span>
+                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Account" asp-action="Logout">Logout</a>
+                        }
+                        else if (Context.Session.GetString("AdminAuthenticated") == "true")
                         {
                             <span class="user-pill">
                                 Admin : @Context.Session.GetString("AdminUsername")
@@ -48,7 +58,8 @@
                         else
                         {
                             <span class="user-pill">Guest access</span>
-                            <a class="btn btn-outline-primary btn-sm" asp-area="" asp-controller="Admin" asp-action="Login">Admin Login</a>
+                            <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Login</a>
+                            <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Signup">Sign up</a>
                         }
                     </div>
                 </div>
@@ -74,6 +85,8 @@
                     <a class="footer-link" asp-controller="Patient" asp-action="Index">Patients</a>
                     <a class="footer-link" asp-controller="Doctor" asp-action="Index">Doctors</a>
                     <a class="footer-link" asp-controller="Appointment" asp-action="Index">Appointments</a>
+                    <a class="footer-link" asp-controller="Appointment" asp-action="GuestRequest">Book an appointment</a>
+                    <a class="footer-link" asp-controller="Staff" asp-action="Login">Staff login</a>
                 </div>
                 <div class="footer-column">
                     <div class="footer-heading">Support</div>

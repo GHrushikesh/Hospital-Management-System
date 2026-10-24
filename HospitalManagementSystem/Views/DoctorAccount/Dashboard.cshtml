@@ -1,0 +1,40 @@
+@model HospitalManagementSystem.Models.DoctorDashboardViewModel
+@{
+    ViewData["Title"] = "Doctor Workspace";
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-2">DOCTOR WORKSPACE</p>
+        <h1 class="display-title">Welcome, Dr. @Model.FullName</h1>
+        <p class="intro-copy">@Model.Specialty · @Model.Username</p>
+    </div>
+    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary dashboard-action">View appointments <span aria-hidden="true">&rarr;</span></a>
+</section>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card metric-card metric-appointments">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
+                <p class="mt-3 mb-0">Review today's appointment schedule.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metric-card metric-doctors">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
+                <p class="mt-3 mb-0">Update appointment status and care notes.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card metric-card metric-patients">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
+                <p class="mt-3 mb-0">Coordinate follow-up care with staff.</p>
+            </div>
+        </div>
+    </div>
+</div>

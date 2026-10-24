@@ -1,0 +1,29 @@
+@model HospitalManagementSystem.Models.StaffDashboardViewModel
+@{
+    ViewData["Title"] = "Staff Workspace";
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-2">STAFF WORKSPACE</p>
+        <h1 class="display-title">Welcome, @Model.FullName</h1>
+        <p class="intro-copy">@Model.Role · @Model.Department</p>
+    </div>
+    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary dashboard-action">Open appointments <span aria-hidden="true">&rarr;</span></a>
+</section>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h4">Your responsibilities</h2>
+        <p class="text-muted">Complete these tasks during your shift.</p>
+        <div class="list-group list-group-flush">
+            @foreach (var task in Model.Tasks)
+            {
+                <div class="list-group-item px-0 d-flex gap-3 align-items-center">
+                    <span class="badge rounded-pill text-bg-primary">Task</span>
+                    <span>@task</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
