@@ -46,6 +46,7 @@ UPDATE Doctors
 SET FullName = @FullName,
     Specialty = @Specialty,
     Username = @Username,
+    PasswordHash = COALESCE(@PasswordHash, PasswordHash),
     PhoneNumber = @PhoneNumber,
     Email = @Email,
     RoomNumber = @RoomNumber,
@@ -62,6 +63,7 @@ WHERE DoctorId = @DoctorId;";
             command.Parameters.AddWithValue("@FullName", doctor.FullName.Trim());
             command.Parameters.AddWithValue("@Specialty", doctor.Specialty.Trim());
             command.Parameters.AddWithValue("@Username", doctor.Username.Trim());
+            command.Parameters.AddWithValue("@PasswordHash", string.IsNullOrWhiteSpace(doctor.Password) ? DBNull.Value : ComputeHash(doctor.Password));
             command.Parameters.AddWithValue("@PhoneNumber", DbValue(doctor.PhoneNumber));
             command.Parameters.AddWithValue("@Email", DbValue(doctor.Email));
             command.Parameters.AddWithValue("@RoomNumber", DbValue(doctor.RoomNumber));

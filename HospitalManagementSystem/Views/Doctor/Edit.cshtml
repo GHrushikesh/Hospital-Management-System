@@ -35,6 +35,12 @@
                             <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
+                            <label asp-for="Password" class="form-label">New login password</label>
+                            <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" />
+                            <span class="form-text">Leave blank to keep the current password.</span>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
                             <label asp-for="PhoneNumber" class="form-label"></label>
                             <input asp-for="PhoneNumber" class="form-control" />
                             <span asp-validation-for="PhoneNumber" class="text-danger"></span>
