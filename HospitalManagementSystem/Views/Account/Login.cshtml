@@ -10,6 +10,7 @@
                 <h3 class="card-title mb-3">Portal Login</h3>
                 <p class="text-muted">Use your account credentials to continue.</p>
                 <form asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <div class="mb-3">
