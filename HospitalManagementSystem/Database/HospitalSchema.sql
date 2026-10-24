@@ -60,3 +60,55 @@ CREATE TABLE Appointments
 CREATE INDEX IX_Patients_PhoneNumber ON Patients(PhoneNumber);
 CREATE INDEX IX_Doctors_Specialty ON Doctors(Specialty);
 CREATE INDEX IX_Appointments_AppointmentDateTime ON Appointments(AppointmentDateTime);
+CREATE TABLE Bills
+(
+    BillId INT IDENTITY(1,1) PRIMARY KEY,
+    PatientId INT NOT NULL,
+    AppointmentId INT NULL,
+    DoctorId INT NULL,
+    BillDate DATETIME2 NOT NULL CONSTRAINT DF_Bills_BillDate DEFAULT (SYSUTCDATETIME()),
+    SubTotal DECIMAL(10,2) NOT NULL CONSTRAINT DF_Bills_SubTotal DEFAULT (0),
+    Tax DECIMAL(10,2) NOT NULL CONSTRAINT DF_Bills_Tax DEFAULT (0),
+    Discount DECIMAL(10,2) NOT NULL CONSTRAINT DF_Bills_Discount DEFAULT (0),
+    Total DECIMAL(10,2) NOT NULL CONSTRAINT DF_Bills_Total DEFAULT (0),
+    PaymentStatus NVARCHAR(50) NOT NULL CONSTRAINT DF_Bills_PaymentStatus DEFAULT ('Unpaid'),
+    PaymentMethod NVARCHAR(50) NULL,
+    Notes NVARCHAR(500) NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Bills_CreatedAt DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_Bills_Patients
+        FOREIGN KEY (PatientId) REFERENCES Patients(PatientId),
+
+    CONSTRAINT FK_Bills_Appointments
+        FOREIGN KEY (AppointmentId) REFERENCES Appointments(AppointmentId),
+
+    CONSTRAINT FK_Bills_Doctors
+        FOREIGN KEY (DoctorId) REFERENCES Doctors(DoctorId)
+);
+
+CREATE TABLE BillItems
+(
+    BillItemId INT IDENTITY(1,1) PRIMARY KEY,
+    BillId INT NOT NULL,
+    Description NVARCHAR(300) NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL,
+    Amount DECIMAL(10,2) NOT NULL,
+    CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_BillItems_CreatedAt DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_BillItems_Bills
+        FOREIGN KEY (BillId) REFERENCES Bills(BillId)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IX_Bills_PatientId
+    ON Bills(PatientId);
+
+CREATE INDEX IX_Bills_BillDate
+    ON Bills(BillDate);
+
+CREATE INDEX IX_Bills_PaymentStatus
+    ON Bills(PaymentStatus);
+
+CREATE INDEX IX_BillItems_BillId
+    ON BillItems(BillId);

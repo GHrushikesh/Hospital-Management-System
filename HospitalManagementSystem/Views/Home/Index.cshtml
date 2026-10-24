@@ -1,8 +1,145 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid py-4">
+
+    ```
+    <!-- Header -->
+    <div class="mb-4">
+        <h1 class="fw-bold">Hospital Management System</h1>
+        <p class="text-muted">Welcome to your hospital management dashboard.</p>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="row g-4">
+
+        <!-- Patients -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="card-title">Patients</h4>
+                    <p class="text-muted">
+                        Manage patient information and records.
+                    </p>
+                    <a href="/Patient" class="btn btn-primary">
+                        Manage Patients
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctors -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="card-title">Doctors</h4>
+                    <p class="text-muted">
+                        View and manage doctor information.
+                    </p>
+                    <a href="/Doctor" class="btn btn-success">
+                        Manage Doctors
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="card-title">Appointments</h4>
+                    <p class="text-muted">
+                        Schedule and manage appointments.
+                    </p>
+                    <a href="/Appointment" class="btn btn-warning">
+                        Appointments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3"></div>
+                    <h4 class="card-title">Billing</h4>
+                    <p class="text-muted">
+                        Manage hospital bills and payments.
+                    </p>
+                    <a href="/Billing" class="btn btn-danger">
+                        Manage Billing
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Quick Access -->
+    <div class="card shadow-sm border-0 mt-5">
+        <div class="card-body">
+            <h3 class="fw-bold mb-3">Quick Access</h3>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <a href="/Patient" class="btn btn-outline-primary w-100 py-3">
+                         Patient Records
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/Appointment" class="btn btn-outline-success w-100 py-3">
+                         Appointment Management
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/Billing" class="btn btn-outline-danger w-100 py-3">
+                         Billing & Payments
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row mt-4 g-4">
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold"> Hospital Information</h5>
+                    <hr />
+                    <p class="mb-1"><strong>System:</strong> Hospital Management System</p>
+                    <p class="mb-1"><strong>Status:</strong> <span class="text-success">● Online</span></p>
+                    <p class="mb-0"><strong>Environment:</strong> Development</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold"> System Features</h5>
+                    <hr />
+                    <ul class="mb-0">
+                        <li>Patient Management</li>
+                        <li>Doctor Management</li>
+                        <li>Appointment Management</li>
+                        <li>Billing Management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    ```
+
 </div>
