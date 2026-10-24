@@ -14,7 +14,7 @@ namespace HospitalManagementSystem.Data.Repositories
         public async Task<StaffUser?> AuthenticateAsync(string username, string password)
         {
             const string query = @"
-SELECT TOP 1 StaffUserId, FullName, Username, PasswordHash, Role, IsActive, CreatedAt
+SELECT TOP 1 StaffUserId, FullName, Username, PasswordHash, Role, PhoneNumber, Email, Department, JobTitle, EmployeeId, IsActive, CreatedAt
 FROM StaffUsers
 WHERE Username = @Username AND IsActive = 1;";
 
@@ -43,6 +43,11 @@ WHERE Username = @Username AND IsActive = 1;";
                         Username = GetNullableString(reader, "Username") ?? string.Empty,
                         PasswordHash = storedDirect,
                         Role = GetNullableString(reader, "Role") ?? "Staff",
+                        PhoneNumber = GetNullableString(reader, "PhoneNumber") ?? string.Empty,
+                        Email = GetNullableString(reader, "Email") ?? string.Empty,
+                        Department = GetNullableString(reader, "Department") ?? string.Empty,
+                        JobTitle = GetNullableString(reader, "JobTitle") ?? string.Empty,
+                        EmployeeId = GetNullableString(reader, "EmployeeId"),
                         IsActive = GetBoolean(reader, "IsActive"),
                         CreatedAt = GetDateTime(reader, "CreatedAt")
                     };
@@ -55,9 +60,9 @@ WHERE Username = @Username AND IsActive = 1;";
         public async Task<int> AddAsync(StaffUser staffUser)
         {
             const string query = @"
-INSERT INTO StaffUsers (FullName, Username, PasswordHash, Role, IsActive)
+INSERT INTO StaffUsers (FullName, Username, PasswordHash, Role, PhoneNumber, Email, Department, JobTitle, EmployeeId, IsActive)
 OUTPUT INSERTED.StaffUserId
-VALUES (@FullName, @Username, @PasswordHash, @Role, @IsActive);";
+VALUES (@FullName, @Username, @PasswordHash, @Role, @PhoneNumber, @Email, @Department, @JobTitle, @EmployeeId, @IsActive);";
 
             await using SqlConnection connection = CreateConnection();
             await connection.OpenAsync();
@@ -67,6 +72,11 @@ VALUES (@FullName, @Username, @PasswordHash, @Role, @IsActive);";
             command.Parameters.AddWithValue("@Username", staffUser.Username.Trim());
             command.Parameters.AddWithValue("@PasswordHash", ComputeHash(staffUser.PasswordHash));
             command.Parameters.AddWithValue("@Role", string.IsNullOrWhiteSpace(staffUser.Role) ? "Staff" : staffUser.Role.Trim());
+            command.Parameters.AddWithValue("@PhoneNumber", staffUser.PhoneNumber.Trim());
+            command.Parameters.AddWithValue("@Email", staffUser.Email.Trim());
+            command.Parameters.AddWithValue("@Department", staffUser.Department.Trim());
+            command.Parameters.AddWithValue("@JobTitle", staffUser.JobTitle.Trim());
+            command.Parameters.AddWithValue("@EmployeeId", DbValue(staffUser.EmployeeId));
             command.Parameters.AddWithValue("@IsActive", staffUser.IsActive);
 
             object? result = await command.ExecuteScalarAsync();

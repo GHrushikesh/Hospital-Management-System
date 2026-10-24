@@ -69,6 +69,12 @@ BEGIN
     );
 END
 
+IF COL_LENGTH('StaffUsers', 'PhoneNumber') IS NULL ALTER TABLE StaffUsers ADD PhoneNumber NVARCHAR(30) NOT NULL CONSTRAINT DF_StaffUsers_PhoneNumber DEFAULT ('');
+IF COL_LENGTH('StaffUsers', 'Email') IS NULL ALTER TABLE StaffUsers ADD Email NVARCHAR(150) NOT NULL CONSTRAINT DF_StaffUsers_Email DEFAULT ('');
+IF COL_LENGTH('StaffUsers', 'Department') IS NULL ALTER TABLE StaffUsers ADD Department NVARCHAR(100) NOT NULL CONSTRAINT DF_StaffUsers_Department DEFAULT ('General');
+IF COL_LENGTH('StaffUsers', 'JobTitle') IS NULL ALTER TABLE StaffUsers ADD JobTitle NVARCHAR(100) NOT NULL CONSTRAINT DF_StaffUsers_JobTitle DEFAULT ('Staff');
+IF COL_LENGTH('StaffUsers', 'EmployeeId') IS NULL ALTER TABLE StaffUsers ADD EmployeeId NVARCHAR(30) NULL;
+
 -- Seed Default Admin Account if not already present
 IF NOT EXISTS (SELECT 1 FROM AdminUsers WHERE Username = 'admin')
 BEGIN
@@ -109,6 +115,8 @@ BEGIN
         DoctorId INT IDENTITY(1,1) PRIMARY KEY,
         FullName NVARCHAR(150) NOT NULL,
         Specialty NVARCHAR(100) NOT NULL,
+        Username NVARCHAR(100) NOT NULL UNIQUE,
+        PasswordHash NVARCHAR(256) NOT NULL,
         PhoneNumber NVARCHAR(20) NULL,
         Email NVARCHAR(150) NULL,
         RoomNumber NVARCHAR(20) NULL,
@@ -118,6 +126,9 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Doctors_CreatedAt DEFAULT (SYSUTCDATETIME())
     );
 END
+
+IF COL_LENGTH('Doctors', 'Username') IS NULL ALTER TABLE Doctors ADD Username NVARCHAR(100) NULL;
+IF COL_LENGTH('Doctors', 'PasswordHash') IS NULL ALTER TABLE Doctors ADD PasswordHash NVARCHAR(256) NULL;
 
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Doctors_Specialty' AND object_id = OBJECT_ID('Doctors'))
 BEGIN

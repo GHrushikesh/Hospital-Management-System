@@ -1,6 +1,7 @@
 using HospitalManagementSystem.Data.Repositories;
 using HospitalManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 
 namespace HospitalManagementSystem.Controllers
 {
@@ -37,8 +38,35 @@ namespace HospitalManagementSystem.Controllers
 
             HttpContext.Session.SetString("LoggedInUserRole", user.Role);
             HttpContext.Session.SetString("LoggedInUserName", user.FullName);
+            HttpContext.Session.SetString("StaffDepartment", user.Department);
             HttpContext.Session.SetString("StaffAuthenticated", "true");
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        [HttpGet]
+        public IActionResult Dashboard()
+        {
+            if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString("LoggedInUserName")))
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var role = HttpContext.Session.GetString("LoggedInUserRole") ?? "Staff";
+            var tasks = role.ToLowerInvariant() switch
+            {
+                "receptionist" => new[] { "Register and update patient details.", "Review new appointment requests.", "Confirm appointment times with patients." },
+                "nurse" => new[] { "Review today's appointment queue.", "Record patient observations for the care team.", "Flag urgent cases for the doctor." },
+                "doctor assistant" => new[] { "Prepare the doctor's daily schedule.", "Update appointment notes and statuses.", "Coordinate follow-up appointments." },
+                _ => new[] { "Review today's hospital schedule.", "Keep patient and appointment records up to date.", "Escalate issues to the administrator." }
+            };
+
+            return View(new StaffDashboardViewModel
+            {
+                FullName = HttpContext.Session.GetString("LoggedInUserName") ?? "Staff member",
+                Role = role,
+                Department = HttpContext.Session.GetString("StaffDepartment") ?? "General",
+                Tasks = tasks
+            });
         }
 
         [HttpGet]
@@ -56,10 +84,24 @@ namespace HospitalManagementSystem.Controllers
                 return View(model);
             }
 
+            model.FullName = model.FullName.Trim();
+            model.Username = model.Username.Trim();
             model.PasswordHash = model.PasswordHash.Trim();
+            model.PhoneNumber = model.PhoneNumber.Trim();
+            model.Email = model.Email.Trim();
+            model.Department = model.Department.Trim();
+            model.JobTitle = model.JobTitle.Trim();
             model.Role = string.IsNullOrWhiteSpace(model.Role) ? "Staff" : model.Role.Trim();
 
-            await _staffRepository.AddAsync(model);
+            try
+            {
+                await _staffRepository.AddAsync(model);
+            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                ModelState.AddModelError(nameof(model.Username), "That username is already in use.");
+                return View(model);
+            }
             return RedirectToAction(nameof(Login));
         }
 

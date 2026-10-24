@@ -18,6 +18,17 @@
                         <div class="col-md-6">
                             <label asp-for="Specialty" class="form-label"></label>
                             <input asp-for="Specialty" class="form-control" />
+                            <span asp-validation-for="Specialty" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Username" class="form-label">Login username</label>
+                            <input asp-for="Username" class="form-control" autocomplete="username" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Password" class="form-label">Login password</label>
+                            <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="PhoneNumber" class="form-label"></label>

@@ -14,12 +14,26 @@ namespace HospitalManagementSystem.Models
         [StringLength(100)]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(256)]
+        [Required, DataType(DataType.Password), StringLength(100, MinimumLength = 8)]
         public string PasswordHash { get; set; } = string.Empty;
 
-        [StringLength(50)]
+        [Required, StringLength(50)]
         public string Role { get; set; } = "Staff";
+
+        [Required, StringLength(30)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required, EmailAddress, StringLength(150)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string Department { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string JobTitle { get; set; } = string.Empty;
+
+        [StringLength(30)]
+        public string? EmployeeId { get; set; }
 
         public bool IsActive { get; set; } = true;
 

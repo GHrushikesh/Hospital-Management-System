@@ -6,7 +6,7 @@ using Microsoft.Data.SqlClient;
 
 namespace HospitalManagementSystem.Controllers
 {
-    [AdminAuthorize]
+    [AdminOnlyAuthorize]
     public class DoctorController : Controller
     {
         private readonly DoctorRepository _doctorRepository;
@@ -43,6 +43,11 @@ namespace HospitalManagementSystem.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Doctor model)
         {
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                ModelState.AddModelError(nameof(model.Password), "A login password is required.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);

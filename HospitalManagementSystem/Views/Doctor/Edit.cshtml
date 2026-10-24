@@ -30,6 +30,11 @@
                             <span asp-validation-for="Specialty" class="text-danger"></span>
                         </div>
                         <div class="col-md-6">
+                            <label asp-for="Username" class="form-label">Login username</label>
+                            <input asp-for="Username" class="form-control" autocomplete="username" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
                             <label asp-for="PhoneNumber" class="form-label"></label>
                             <input asp-for="PhoneNumber" class="form-control" />
                             <span asp-validation-for="PhoneNumber" class="text-danger"></span>

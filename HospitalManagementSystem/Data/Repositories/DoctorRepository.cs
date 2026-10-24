@@ -1,5 +1,7 @@
 using HospitalManagementSystem.Models;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HospitalManagementSystem.Data.Repositories
 {
@@ -13,10 +15,10 @@ namespace HospitalManagementSystem.Data.Repositories
         {
             const string query = @"
 INSERT INTO Doctors
-    (FullName, Specialty, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive)
+    (FullName, Specialty, Username, PasswordHash, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive)
 OUTPUT INSERTED.DoctorId
 VALUES
-    (@FullName, @Specialty, @PhoneNumber, @Email, @RoomNumber, @Availability, @ConsultationFee, @IsActive);";
+    (@FullName, @Specialty, @Username, @PasswordHash, @PhoneNumber, @Email, @RoomNumber, @Availability, @ConsultationFee, @IsActive);";
 
             await using SqlConnection connection = CreateConnection();
             await connection.OpenAsync();
@@ -24,6 +26,8 @@ VALUES
             await using SqlCommand command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@FullName", doctor.FullName.Trim());
             command.Parameters.AddWithValue("@Specialty", doctor.Specialty.Trim());
+            command.Parameters.AddWithValue("@Username", doctor.Username.Trim());
+            command.Parameters.AddWithValue("@PasswordHash", ComputeHash(doctor.Password ?? throw new InvalidOperationException("Doctor password is required.")));
             command.Parameters.AddWithValue("@PhoneNumber", DbValue(doctor.PhoneNumber));
             command.Parameters.AddWithValue("@Email", DbValue(doctor.Email));
             command.Parameters.AddWithValue("@RoomNumber", DbValue(doctor.RoomNumber));
@@ -41,6 +45,7 @@ VALUES
 UPDATE Doctors
 SET FullName = @FullName,
     Specialty = @Specialty,
+    Username = @Username,
     PhoneNumber = @PhoneNumber,
     Email = @Email,
     RoomNumber = @RoomNumber,
@@ -56,6 +61,7 @@ WHERE DoctorId = @DoctorId;";
             command.Parameters.AddWithValue("@DoctorId", doctor.DoctorId);
             command.Parameters.AddWithValue("@FullName", doctor.FullName.Trim());
             command.Parameters.AddWithValue("@Specialty", doctor.Specialty.Trim());
+            command.Parameters.AddWithValue("@Username", doctor.Username.Trim());
             command.Parameters.AddWithValue("@PhoneNumber", DbValue(doctor.PhoneNumber));
             command.Parameters.AddWithValue("@Email", DbValue(doctor.Email));
             command.Parameters.AddWithValue("@RoomNumber", DbValue(doctor.RoomNumber));
@@ -82,7 +88,7 @@ WHERE DoctorId = @DoctorId;";
         public async Task<Doctor?> GetByIdAsync(int doctorId)
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 WHERE DoctorId = @DoctorId;";
 
@@ -104,7 +110,7 @@ WHERE DoctorId = @DoctorId;";
         public async Task<IReadOnlyList<Doctor>> GetAllAsync()
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 ORDER BY FullName;";
 
@@ -127,7 +133,7 @@ ORDER BY FullName;";
         public async Task<IReadOnlyList<Doctor>> SearchAsync(string searchTerm)
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 WHERE FullName LIKE @SearchTerm
    OR Specialty LIKE @SearchTerm
@@ -158,6 +164,7 @@ ORDER BY FullName;";
                 DoctorId = GetInt32(reader, "DoctorId"),
                 FullName = GetNullableString(reader, "FullName") ?? string.Empty,
                 Specialty = GetNullableString(reader, "Specialty") ?? string.Empty,
+                Username = GetNullableString(reader, "Username") ?? string.Empty,
                 PhoneNumber = GetNullableString(reader, "PhoneNumber"),
                 Email = GetNullableString(reader, "Email"),
                 RoomNumber = GetNullableString(reader, "RoomNumber"),
@@ -166,6 +173,31 @@ ORDER BY FullName;";
                 IsActive = GetBoolean(reader, "IsActive"),
                 CreatedAt = GetDateTime(reader, "CreatedAt")
             };
+        }
+
+        public async Task<Doctor?> AuthenticateAsync(string username, string password)
+        {
+            const string query = @"
+SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt, PasswordHash
+FROM Doctors
+WHERE Username = @Username AND IsActive = 1;";
+
+            await using SqlConnection connection = CreateConnection();
+            await connection.OpenAsync();
+            await using SqlCommand command = new(query, connection);
+            command.Parameters.AddWithValue("@Username", username.Trim());
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync() || !string.Equals(GetNullableString(reader, "PasswordHash"), ComputeHash(password), StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return MapDoctor(reader);
+        }
+
+        private static string ComputeHash(string input)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input.Trim()))).ToLowerInvariant();
         }
     }
 }

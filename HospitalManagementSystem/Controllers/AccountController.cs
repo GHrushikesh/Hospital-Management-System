@@ -1,6 +1,7 @@
 using HospitalManagementSystem.Data.Repositories;
 using HospitalManagementSystem.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 
 namespace HospitalManagementSystem.Controllers
 {
@@ -8,11 +9,13 @@ namespace HospitalManagementSystem.Controllers
     {
         private readonly AdminRepository _adminRepository;
         private readonly StaffRepository _staffRepository;
+        private readonly DoctorRepository _doctorRepository;
 
-        public AccountController(AdminRepository adminRepository, StaffRepository staffRepository)
+        public AccountController(AdminRepository adminRepository, StaffRepository staffRepository, DoctorRepository doctorRepository)
         {
             _adminRepository = adminRepository;
             _staffRepository = staffRepository;
+            _doctorRepository = doctorRepository;
         }
 
         [HttpGet]
@@ -42,8 +45,20 @@ namespace HospitalManagementSystem.Controllers
             var staff = await _staffRepository.AuthenticateAsync(model.Username, model.Password);
             if (staff is not null)
             {
-                SetSession(staff.Role, staff.FullName);
-                return RedirectToLocal(returnUrl);
+                SetSession(staff.Role, staff.FullName, staff.Department);
+                return RedirectToLocal(returnUrl, "Staff", "Dashboard");
+            }
+
+            var doctor = await _doctorRepository.AuthenticateAsync(model.Username, model.Password);
+            if (doctor is not null)
+            {
+                HttpContext.Session.Clear();
+                HttpContext.Session.SetString("LoggedInUserRole", "Doctor");
+                HttpContext.Session.SetString("LoggedInUserName", doctor.FullName);
+                HttpContext.Session.SetString("DoctorId", doctor.DoctorId.ToString());
+                HttpContext.Session.SetString("DoctorSpecialty", doctor.Specialty);
+                HttpContext.Session.SetString("DoctorUsername", doctor.Username);
+                return RedirectToLocal(returnUrl, "DoctorAccount", "Dashboard");
             }
 
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
@@ -67,7 +82,23 @@ namespace HospitalManagementSystem.Controllers
             }
 
             model.Role = "Staff";
-            await _staffRepository.AddAsync(model);
+            model.FullName = model.FullName.Trim();
+            model.Username = model.Username.Trim();
+            model.Email = model.Email.Trim();
+            model.PhoneNumber = model.PhoneNumber.Trim();
+            model.Department = model.Department.Trim();
+            model.JobTitle = model.JobTitle.Trim();
+            model.PasswordHash = model.PasswordHash.Trim();
+
+            try
+            {
+                await _staffRepository.AddAsync(model);
+            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                ModelState.AddModelError(nameof(model.Username), "That username is already in use.");
+                return View(model);
+            }
             return RedirectToAction(nameof(Login));
         }
 
@@ -77,10 +108,11 @@ namespace HospitalManagementSystem.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        private void SetSession(string role, string name)
+        private void SetSession(string role, string name, string? department = null)
         {
             HttpContext.Session.SetString("LoggedInUserRole", role);
             HttpContext.Session.SetString("LoggedInUserName", name);
+            HttpContext.Session.SetString("StaffDepartment", department ?? string.Empty);
 
             if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
             {
@@ -89,11 +121,11 @@ namespace HospitalManagementSystem.Controllers
             }
         }
 
-        private IActionResult RedirectToLocal(string? returnUrl)
+        private IActionResult RedirectToLocal(string? returnUrl, string fallbackController = "Home", string fallbackAction = "Index")
         {
             return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
                 ? Redirect(returnUrl)
-                : RedirectToAction("Index", "Home");
+                : RedirectToAction(fallbackAction, fallbackController);
         }
     }
 }
