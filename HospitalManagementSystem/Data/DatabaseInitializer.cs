@@ -54,6 +54,21 @@ BEGIN
     );
 END
 
+-- 2. Staff users
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'StaffUsers')
+BEGIN
+    CREATE TABLE StaffUsers
+    (
+        StaffUserId INT IDENTITY(1,1) PRIMARY KEY,
+        FullName NVARCHAR(150) NOT NULL,
+        Username NVARCHAR(100) NOT NULL UNIQUE,
+        PasswordHash NVARCHAR(256) NOT NULL,
+        Role NVARCHAR(50) NOT NULL CONSTRAINT DF_StaffUsers_Role DEFAULT ('Staff'),
+        IsActive BIT NOT NULL CONSTRAINT DF_StaffUsers_IsActive DEFAULT (1),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_StaffUsers_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+END
+
 -- Seed Default Admin Account if not already present
 IF NOT EXISTS (SELECT 1 FROM AdminUsers WHERE Username = 'admin')
 BEGIN
@@ -61,7 +76,7 @@ BEGIN
     VALUES ('admin', 'admin123', 1);
 END
 
--- 2. Patients Table
+-- 3. Patients Table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Patients')
 BEGIN
     CREATE TABLE Patients
@@ -86,7 +101,7 @@ BEGIN
     CREATE INDEX IX_Patients_PhoneNumber ON Patients(PhoneNumber);
 END
 
--- 3. Doctors Table
+-- 4. Doctors Table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Doctors')
 BEGIN
     CREATE TABLE Doctors
@@ -109,7 +124,7 @@ BEGIN
     CREATE INDEX IX_Doctors_Specialty ON Doctors(Specialty);
 END
 
--- 4. Appointments Table
+-- 5. Appointments Table
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Appointments')
 BEGIN
     CREATE TABLE Appointments
