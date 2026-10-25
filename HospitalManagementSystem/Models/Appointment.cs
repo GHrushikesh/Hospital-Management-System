@@ -12,6 +12,7 @@ namespace HospitalManagementSystem.Models
         [Required]
         public int DoctorId { get; set; }
 
+        [Required(ErrorMessage = "Appointment date and time are required.")]
         public DateTime AppointmentDateTime { get; set; }
 
         [Required]
