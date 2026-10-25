@@ -159,9 +159,35 @@ BEGIN
 END
 ";
                     schemaCmd.ExecuteNonQuery();
+
+                    // Execute SeedData.sql if available
+                    string seedScriptPath = Path.Combine(AppContext.BaseDirectory, "Database", "SeedData.sql");
+                    if (!File.Exists(seedScriptPath))
+                    {
+                        seedScriptPath = Path.Combine(Directory.GetCurrentDirectory(), "Database", "SeedData.sql");
+                    }
+
+                    if (File.Exists(seedScriptPath))
+                    {
+                        string seedSql = File.ReadAllText(seedScriptPath);
+                        var scriptBatches = System.Text.RegularExpressions.Regex.Split(seedSql, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                        foreach (var batch in scriptBatches)
+                        {
+                            string trimmedBatch = batch.Trim();
+                            if (string.IsNullOrWhiteSpace(trimmedBatch) || trimmedBatch.StartsWith("USE ", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            using var seedCmd = dbConn.CreateCommand();
+                            seedCmd.CommandText = trimmedBatch;
+                            seedCmd.ExecuteNonQuery();
+                        }
+                    }
                 }
 
-                Console.WriteLine("[DatabaseInitializer] HospitalDb and schema initialized successfully.");
+                Console.WriteLine("[DatabaseInitializer] HospitalDb, schema, and seed data initialized successfully.");
             }
             catch (Exception ex)
             {

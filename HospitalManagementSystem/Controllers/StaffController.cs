@@ -17,7 +17,7 @@ namespace HospitalManagementSystem.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            return View(new StaffLoginViewModel());
+            return RedirectToAction("Login", "Account");
         }
 
         [HttpPost]
