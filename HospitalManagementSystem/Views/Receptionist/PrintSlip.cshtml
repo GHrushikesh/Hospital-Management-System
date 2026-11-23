@@ -1,0 +1,96 @@
+@model HospitalManagementSystem.Models.Appointment
+@{
+    ViewData["Title"] = "OPD Consultation Token Slip - #" + Model.TokenNumber;
+}
+
+<style>
+    @@media print {
+        header, footer, .no-print {
+            display: none !important;
+        }
+        body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+        .token-slip-card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+            <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">&larr; Back to Front Desk</a>
+            <button onclick="window.print();" class="btn btn-primary btn-sm">
+                🖨️ Print Token Slip
+            </button>
+        </div>
+
+        <div class="card shadow-sm token-slip-card" style="border: 2px dashed var(--cb-line) !important; background: #fff;">
+            <div class="card-body p-4 text-center">
+                <!-- Hospital Header -->
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <span class="brand-mark" style="width: 28px; height: 28px; font-size: 1rem;">+</span>
+                    <h5 class="fw-bold mb-0" style="font-family: 'Space Grotesk', sans-serif;">CareBridge Hospital</h5>
+                </div>
+                <div class="text-muted small mb-3">Accredited Clinical Healthcare & Emergency Trauma Center</div>
+                <div class="border-top border-bottom py-1 mb-3 text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.1em; color: var(--cb-muted);">
+                    Outpatient Department (OPD) Arrival Token
+                </div>
+
+                <!-- Giant Token Badge -->
+                <div class="my-3 p-3 rounded" style="background: var(--cb-paper); border: 2px solid var(--cb-slate);">
+                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.78rem; letter-spacing: 0.08em;">Your Queue Token Number</div>
+                    <div class="display-3 fw-bold" style="font-family: 'Space Grotesk', sans-serif; color: var(--cb-ink);">
+                        #@(Model.TokenNumber.HasValue ? Model.TokenNumber.Value.ToString("D2") : "01")
+                    </div>
+                    <div class="small fw-semibold text-muted">Please watch the waiting room display monitor</div>
+                </div>
+
+                <!-- Patient & Specialist Details -->
+                <div class="text-start mb-3 p-3 rounded border" style="background: #faf9f6; font-size: 0.88rem;">
+                    <div class="row g-2">
+                        <div class="col-5 text-muted">Patient Name:</div>
+                        <div class="col-7 fw-bold text-dark">@Model.PatientName</div>
+
+                        <div class="col-5 text-muted">MRN File #:</div>
+                        <div class="col-7 font-monospace fw-semibold">@Model.PatientMRN</div>
+
+                        <div class="col-5 text-muted">Consulting Doctor:</div>
+                        <div class="col-7 fw-bold text-dark">@Model.DoctorName</div>
+
+                        <div class="col-5 text-muted">Specialty:</div>
+                        <div class="col-7">@Model.DoctorSpecialty</div>
+
+                        <div class="col-5 text-muted">Consultation Room:</div>
+                        <div class="col-7 fw-bold" style="color: #0d6efd;">
+                            @(string.IsNullOrWhiteSpace(Model.DoctorRoomNumber) ? "OPD Consultation Desk" : Model.DoctorRoomNumber)
+                        </div>
+
+                        <div class="col-5 text-muted">Arrival Date & Time:</div>
+                        <div class="col-7">@Model.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</div>
+
+                        <div class="col-5 text-muted">Payment Status:</div>
+                        <div class="col-7">
+                            <span class="badge bg-success">
+                                @Model.PaymentAmount.ToString("C") Paid (@(string.IsNullOrWhiteSpace(Model.PaymentMethod) ? "Cash" : Model.PaymentMethod))
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-2 mb-3 bg-light rounded text-center small text-muted border">
+                    📍 <strong>Patient Instruction:</strong> Please proceed to <strong>@(string.IsNullOrWhiteSpace(Model.DoctorRoomNumber) ? "OPD Area" : Model.DoctorRoomNumber)</strong>. The clinical nurse will record your vitals prior to consultation.
+                </div>
+
+                <div class="text-muted" style="font-size: 0.7rem;">
+                    Slip generated by Reception Desk at @DateTime.Now.ToString("g") &bull; Keep slip until visit is complete.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

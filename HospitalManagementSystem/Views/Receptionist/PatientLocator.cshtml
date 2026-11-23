@@ -1,0 +1,110 @@
+@model IReadOnlyList<HospitalManagementSystem.Models.Appointment>
+@{
+    ViewData["Title"] = "Patient & Doctor Room Locator";
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-1">FRONT DESK VISITOR INQUIRY</p>
+        <h1 class="display-title">Patient & Clinic Room Locator</h1>
+        <p class="intro-copy">Quick lookup to assist visitors, relatives, and patients with room numbers, attending specialists, and schedule times.</p>
+    </div>
+    <a asp-action="Dashboard" class="btn btn-outline-secondary dashboard-action">&larr; Back to Front Desk</a>
+</section>
+
+<!-- Search Box -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form asp-action="PatientLocator" method="get" class="row g-2 align-items-center">
+            <div class="col-md-9 col-sm-12">
+                <input type="text"
+                       name="searchTerm"
+                       value="@ViewBag.SearchTerm"
+                       class="form-control"
+                       placeholder="Enter patient name, MRN (e.g. MRN-2610-001), or phone number..." required />
+            </div>
+            <div class="col-md-3 col-sm-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">Search Records</button>
+                @if (!string.IsNullOrEmpty(ViewBag.SearchTerm as string))
+                {
+                    <a asp-action="PatientLocator" class="btn btn-outline-secondary">Clear</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.SearchTerm != null)
+{
+    <div class="schedule-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow mb-1">SEARCH RESULTS</p>
+                <h2>Matched Patients & Clinical Locations for "@ViewBag.SearchTerm"</h2>
+            </div>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Patient Info</th>
+                            <th>MRN</th>
+                            <th>Attending Specialist</th>
+                            <th>Room / Ward Location</th>
+                            <th>Date & Time</th>
+                            <th>Queue Token</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong class="d-block" style="color: var(--cb-ink);">@item.PatientName</strong>
+                                    <span class="text-muted small">Tel: @item.PatientPhoneNumber</span>
+                                </td>
+                                <td>
+                                    <span class="badge text-bg-light border font-monospace">@item.PatientMRN</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@item.DoctorName</div>
+                                    <span class="text-muted small">@item.DoctorSpecialty (@item.DoctorQualification)</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary text-white px-2 py-1" style="font-size: 0.82rem;">
+                                        📍 @(string.IsNullOrWhiteSpace(item.DoctorRoomNumber) ? "OPD Consultation Desk" : item.DoctorRoomNumber)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div>@item.AppointmentDateTime.ToString("dd MMM yyyy")</div>
+                                    <span class="text-muted small">@item.AppointmentDateTime.ToString("hh:mm tt")</span>
+                                </td>
+                                <td>
+                                    @if (item.TokenNumber.HasValue)
+                                    {
+                                        <span class="badge bg-dark font-monospace">Token #@item.TokenNumber</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Not Issued</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">@item.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">No matching patient records found for query "<strong>@ViewBag.SearchTerm</strong>".</div>
+        }
+    </div>
+}

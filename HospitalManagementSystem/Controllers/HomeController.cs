@@ -7,32 +7,53 @@ namespace HospitalManagementSystem.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly PatientRepository _patientRepository;
         private readonly DoctorRepository _doctorRepository;
-        private readonly AppointmentRepository _appointmentRepository;
 
-        public HomeController(PatientRepository patientRepository, DoctorRepository doctorRepository, AppointmentRepository appointmentRepository)
+        public HomeController(DoctorRepository doctorRepository)
         {
-            _patientRepository = patientRepository;
             _doctorRepository = doctorRepository;
-            _appointmentRepository = appointmentRepository;
         }
 
         public async Task<IActionResult> Index()
         {
-            var viewModel = new DashboardViewModel();
+            // If already logged in, redirect straight to their respective dedicated workspace
+            var role = HttpContext.Session.GetString("LoggedInUserRole");
+            if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) ||
+                HttpContext.Session.GetString("AdminAuthenticated") == "true")
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+            if (string.Equals(role, "Doctor", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Dashboard", "DoctorAccount");
+            }
+            if (string.Equals(role, "Receptionist", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Dashboard", "Receptionist");
+            }
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                return RedirectToAction("Dashboard", "Staff");
+            }
 
-            try
+            // Public Patient / Guest Portal
+            var doctors = (await _doctorRepository.GetAllAsync())
+                .Where(d => d.IsActive)
+                .ToList();
+
+            var specialties = doctors
+                .Select(d => d.Specialty)
+                .Distinct()
+                .OrderBy(s => s)
+                .ToList();
+
+            var viewModel = new PatientPortalViewModel
             {
-                viewModel.PatientCount = (await _patientRepository.GetAllAsync()).Count;
-                viewModel.DoctorCount = (await _doctorRepository.GetAllAsync()).Count;
-                viewModel.AppointmentCount = (await _appointmentRepository.GetHistoryAsync()).Count;
-                viewModel.TodayAppointments = await _appointmentRepository.GetTodayAppointmentsAsync();
-            }
-            catch (Exception ex)
-            {
-                ViewBag.Error = ex.Message;
-            }
+                FeaturedDoctors = doctors,
+                Specialties = specialties,
+                TotalSpecialtiesCount = specialties.Count,
+                TotalDoctorsAvailable = doctors.Count
+            };
 
             return View(viewModel);
         }

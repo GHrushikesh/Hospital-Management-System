@@ -1,5 +1,7 @@
 using HospitalManagementSystem.Models;
 using Microsoft.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HospitalManagementSystem.Data.Repositories
 {
@@ -9,22 +11,30 @@ namespace HospitalManagementSystem.Data.Repositories
         {
         }
 
-        public async Task<AdminUser?> AuthenticateAsync(string username, string passwordHash)
+        public async Task<AdminUser?> AuthenticateAsync(string username, string password)
         {
             const string query = @"
 SELECT TOP 1 AdminUserId, Username, PasswordHash, IsActive, CreatedAt
 FROM AdminUsers
-WHERE Username = @Username AND PasswordHash = @PasswordHash AND IsActive = 1;";
+WHERE Username = @Username AND IsActive = 1;";
 
             await using SqlConnection connection = CreateConnection();
             await connection.OpenAsync();
 
             await using SqlCommand command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@Username", username.Trim());
-            command.Parameters.AddWithValue("@PasswordHash", passwordHash);
 
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
             if (!await reader.ReadAsync())
+            {
+                return null;
+            }
+
+            var stored = GetNullableString(reader, "PasswordHash") ?? string.Empty;
+            var hashed = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(password.Trim()))).ToLowerInvariant();
+
+            if (!string.Equals(stored, password.Trim(), StringComparison.Ordinal) &&
+                !string.Equals(stored, hashed, StringComparison.OrdinalIgnoreCase))
             {
                 return null;
             }
@@ -33,7 +43,7 @@ WHERE Username = @Username AND PasswordHash = @PasswordHash AND IsActive = 1;";
             {
                 AdminUserId = GetInt32(reader, "AdminUserId"),
                 Username = GetNullableString(reader, "Username") ?? string.Empty,
-                PasswordHash = GetNullableString(reader, "PasswordHash") ?? string.Empty,
+                PasswordHash = stored,
                 IsActive = GetBoolean(reader, "IsActive"),
                 CreatedAt = GetDateTime(reader, "CreatedAt")
             };

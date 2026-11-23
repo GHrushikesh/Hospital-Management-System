@@ -14,6 +14,10 @@ namespace HospitalManagementSystem.Models
         [StringLength(100)]
         public string Specialty { get; set; } = string.Empty;
 
+        [StringLength(150)]
+        [Display(Name = "Medical Qualification")]
+        public string Qualification { get; set; } = "MBBS, MD";
+
         [Required, StringLength(100)]
         public string Username { get; set; } = string.Empty;
 

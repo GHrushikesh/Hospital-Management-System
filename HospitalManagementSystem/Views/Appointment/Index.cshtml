@@ -1,89 +1,133 @@
-﻿@model IEnumerable<HospitalManagementSystem.Models.Appointment>
+@model IEnumerable<HospitalManagementSystem.Models.Appointment>
 @{
-    ViewData["Title"] = "Appointments";
+    ViewData["Title"] = "All Hospital Appointments - Administrative Ledger";
+    var userRole = Context.Session.GetString("LoggedInUserRole");
+    bool canManage = Context.Session.GetString("AdminAuthenticated") == "true" 
+        || string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Appointments</h2>
-    <a asp-action="Create" class="btn btn-primary">Book Appointment</a>
+    <div>
+        <p class="eyebrow mb-1">CENTRAL APPOINTMENT DESK</p>
+        <h2 style="font-family: 'Space Grotesk', sans-serif;">Scheduled Care & Operations Ledger</h2>
+        <p class="text-muted small mb-0">Authorized hospital-wide master ledger. Cancellation and rescheduling authority is restricted to Administration and Front Desk.</p>
+    </div>
+    @if (canManage)
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Book Hospital Appointment</a>
+    }
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Date & Time</th>
-            <th>Reason</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var appointment in Model)
-            {
+<div class="schedule-panel">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
                 <tr>
-                    <td>@appointment.PatientName</td>
-                    <td>@appointment.DoctorName</td>
-                    <td>@appointment.AppointmentDateTime.ToString("g")</td>
-                    <td>@appointment.Reason</td>
-                    <td>
-                        @switch (appointment.Status)
-                        {
-                            case "Completed":
-                                <span class="badge bg-success">Completed</span>
-                                break;
-                            case "Cancelled":
-                                <span class="badge bg-danger">Cancelled</span>
-                                break;
-                            case "In Progress":
-                                <span class="badge bg-info text-dark">In Progress</span>
-                                break;
-                            default:
-                                <span class="badge bg-warning text-dark">Scheduled</span>
-                                break;
-                        }
-                    </td>
-                    <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@appointment.AppointmentId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
-                        @if (!string.Equals(appointment.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
-                        {
-                            <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
-                            </form>
-                        }
-                        else
-                        {
-                            <button class="btn btn-sm btn-outline-secondary" disabled>Cancelled</button>
-                        }
-                    </td>
+                    <th>Patient</th>
+                    <th>Consulting Specialist</th>
+                    <th>Date & Time</th>
+                    <th>Reason / Severity</th>
+                    <th>Triage Vitals</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
-            }
-        }
-        else
-        {
-            <tr>
-                <td colspan="6" class="text-center text-muted py-4">No appointments found.</td>
-            </tr>
-        }
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var appointment in Model)
+                    {
+                        <tr class="@(appointment.IsEmergency ? "table-danger" : "")">
+                            <td>
+                                <strong class="d-block" style="color: var(--cb-ink);">@appointment.PatientName</strong>
+                                <span class="text-muted small">MRN: @appointment.PatientMRN | Tel: @appointment.PatientPhoneNumber</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@appointment.DoctorName</div>
+                                <span class="badge text-bg-light border small">Room: @(string.IsNullOrWhiteSpace(appointment.DoctorRoomNumber) ? "OPD" : appointment.DoctorRoomNumber)</span>
+                            </td>
+                            <td>
+                                <div>@appointment.AppointmentDateTime.ToString("dd MMM yyyy")</div>
+                                <span class="text-muted small">@appointment.AppointmentDateTime.ToString("hh:mm tt")</span>
+                            </td>
+                            <td>
+                                <div>@appointment.Reason</div>
+                                @if (appointment.IsEmergency)
+                                {
+                                    <span class="badge bg-danger text-white mt-1">🚨 Critical Emergency</span>
+                                    @if (!string.IsNullOrWhiteSpace(appointment.EmergencyDescription))
+                                    {
+                                        <div class="small text-danger mt-1">@appointment.EmergencyDescription</div>
+                                    }
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(appointment.VitalsSummary))
+                                {
+                                    <span class="badge text-bg-light border text-dark font-monospace small">@appointment.VitalsSummary</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (appointment.Status)
+                                {
+                                    case "Completed":
+                                        <span class="badge bg-secondary">Completed</span>
+                                        break;
+                                    case "Cancelled":
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        break;
+                                    case "Approved":
+                                        <span class="badge bg-success">Approved</span>
+                                        break;
+                                    case "Emergency - Accepted":
+                                        <span class="badge bg-danger">Emergency Accepted</span>
+                                        break;
+                                    case "Checked-In":
+                                        <span class="badge bg-info text-dark">Checked In</span>
+                                        break;
+                                    case "Rejected":
+                                        <span class="badge bg-danger">Declined</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-warning text-dark">@appointment.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (canManage)
+                                {
+                                    <a asp-action="Edit" asp-route-id="@appointment.AppointmentId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                    @if (!string.Equals(appointment.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post" class="d-inline" onsubmit="return confirm('Cancel appointment #@appointment.AppointmentId?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>Cancelled</button>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">View Only</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No appointments found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

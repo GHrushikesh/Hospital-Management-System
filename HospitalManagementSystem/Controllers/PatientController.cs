@@ -92,6 +92,7 @@ namespace HospitalManagementSystem.Controllers
         }
 
         [HttpPost]
+        [AdminOnlyAuthorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {

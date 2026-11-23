@@ -1,31 +1,49 @@
 @model HospitalManagementSystem.Models.AccountLoginViewModel
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "CareBridge Hospital Portal Login";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-5">
         <div class="card shadow-sm">
-            <div class="card-body">
-                <h3 class="card-title mb-3">Portal Login</h3>
-                <p class="text-muted">Use your account credentials to continue.</p>
+            <div class="card-body p-4">
+                <div class="text-center mb-3">
+                    <span class="brand-mark mb-2" style="width: 40px; height: 40px; font-size: 1.3rem;">+</span>
+                    <h3 class="card-title mb-1" style="font-family: 'Space Grotesk', sans-serif;">Hospital Portal Login</h3>
+                    <p class="text-muted small">Sign in to your clinical or administrative workspace.</p>
+                </div>
+
                 <form asp-action="Login" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
                     <div class="mb-3">
-                        <label asp-for="Username" class="form-label"></label>
-                        <input asp-for="Username" class="form-control" autocomplete="username" />
-                        <span asp-validation-for="Username" class="text-danger"></span>
+                        <label asp-for="Username" class="form-label small fw-semibold">Hospital Username</label>
+                        <input asp-for="Username" class="form-control" autocomplete="username" placeholder="Username" required />
+                        <span asp-validation-for="Username" class="text-danger small"></span>
                     </div>
+
                     <div class="mb-3">
-                        <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <label asp-for="Password" class="form-label small fw-semibold">Secure Password</label>
+                        <input asp-for="Password" class="form-control" type="password" autocomplete="current-password" placeholder="Password" required />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                    <a asp-action="Signup" class="btn btn-outline-secondary ms-2">Sign up as staff</a>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary py-2 fw-semibold">Sign in to Portal &rarr;</button>
+                    </div>
                 </form>
+
+                <div class="mt-4 pt-3 border-top">
+                    <div class="alert alert-light border small text-muted mb-0">
+                        <div class="fw-bold text-dark mb-1">Demo Access Credentials:</div>
+                        <div>&bull; <strong>Admin:</strong> <code>admin</code> / <code>admin123</code></div>
+                        <div>&bull; <strong>Doctor:</strong> <code>dr.arjun</code> / <code>Doctor@123</code></div>
+                        <div>&bull; <strong>Nurse:</strong> <code>sarah.nurse</code> / <code>Staff@123</code></div>
+                        <div>&bull; <strong>Reception:</strong> <code>john.reception</code> / <code>Staff@123</code></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

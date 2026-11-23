@@ -1,0 +1,184 @@
+@model IReadOnlyList<HospitalManagementSystem.Models.Appointment>
+@{
+    ViewData["Title"] = "Track Appointment Status";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <p class="eyebrow mb-1">PATIENT SELF-SERVICE</p>
+                <h3 class="card-title mb-2" style="font-family: 'Space Grotesk', sans-serif;">Track Your Appointment Status</h3>
+                <p class="text-muted small mb-4">
+                    Enter the mobile phone number you used when requesting the appointment to check doctor approval and schedule updates.
+                </p>
+
+                <form asp-action="CheckStatus" method="post" class="row g-2 align-items-center mb-3">
+                    @Html.AntiForgeryToken()
+                    <div class="col-sm-8">
+                        <input type="text" name="phoneNumber" class="form-control" placeholder="Enter your 10-digit mobile number" value="@ViewBag.PhoneNumber" required />
+                    </div>
+                    <div class="col-sm-4">
+                        <button type="submit" class="btn btn-primary w-100">Search Records</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @if (ViewBag.PhoneNumber != null)
+        {
+            <div class="schedule-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow mb-1">BOOKING HISTORY</p>
+                        <h2>Appointments for @ViewBag.PhoneNumber</h2>
+                    </div>
+                </div>
+
+                @if (Model != null && Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Doctor & Room</th>
+                                    <th>Date & Time</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                    <th>Doctor Advice / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@item.DoctorName</div>
+                                            <div class="text-muted small">@item.DoctorSpecialty (@item.DoctorQualification)</div>
+                                            <span class="badge text-bg-light border small mt-1">Room: @(string.IsNullOrWhiteSpace(item.DoctorRoomNumber) ? "OPD" : item.DoctorRoomNumber)</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@item.AppointmentDateTime.ToString("dd MMM yyyy")</div>
+                                            <div class="text-muted small">@item.AppointmentDateTime.ToString("hh:mm tt")</div>
+                                        </td>
+                                        <td>
+                                            <span>@item.Reason</span>
+                                            @if (item.IsEmergency)
+                                            {
+                                                <div><span class="badge bg-danger text-white mt-1">🚨 Emergency</span></div>
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (item.Status)
+                                            {
+                                                case "Approved":
+                                                    <span class="badge bg-success">Approved for Visit</span>
+                                                    break;
+                                                case "Emergency - Accepted":
+                                                    <span class="badge bg-danger">Emergency Accepted</span>
+                                                    break;
+                                                case "Requested":
+                                                case "Emergency":
+                                                    <span class="badge bg-warning text-dark">Pending Doctor Approval</span>
+                                                    break;
+                                                case "Checked-In":
+                                                    <span class="badge bg-info text-dark">Checked In at Hospital</span>
+                                                    break;
+                                                case "Completed":
+                                                    <span class="badge bg-secondary">Completed</span>
+                                                    break;
+                                                case "Rejected":
+                                                    <span class="badge bg-danger">Declined by Doctor</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-light text-dark border">@item.Status</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrWhiteSpace(item.DoctorNotes))
+                                            {
+                                                <div class="p-2 rounded bg-light border small">
+                                                    <strong>Physician Prescription & Advice:</strong><br />
+                                                    @item.DoctorNotes
+                                                </div>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(item.Notes))
+                                            {
+                                                <span class="text-muted small">@item.Notes</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">No appointments found for phone number <strong>@ViewBag.PhoneNumber</strong>.</div>
+                }
+            </div>
+
+            @if (ViewBag.Prescriptions != null && ((IEnumerable<HospitalManagementSystem.Models.Prescription>)ViewBag.Prescriptions).Any())
+            {
+                var rxList = (IEnumerable<HospitalManagementSystem.Models.Prescription>)ViewBag.Prescriptions;
+                <div class="schedule-panel mt-4">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow mb-1">MEDICATION HISTORY & PRESCRIPTIONS</p>
+                            <h2>Previously Prescribed Medicines</h2>
+                        </div>
+                        <span class="schedule-date">Clinical Medical Record</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Medicine Name</th>
+                                    <th>Dosage & Frequency</th>
+                                    <th>Duration</th>
+                                    <th>Instructions</th>
+                                    <th>Prescribed By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rx in rxList)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong class="text-primary fs-6">💊 @rx.MedicineName</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge text-bg-light border text-dark fw-semibold">@rx.Dosage</span>
+                                            <span class="badge text-bg-secondary font-monospace">@rx.Frequency</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge text-bg-light border">@rx.Duration</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">@(string.IsNullOrWhiteSpace(rx.Instructions) ? "As directed by physician" : rx.Instructions)</small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold small">@rx.DoctorName</div>
+                                            <div class="text-muted small">@rx.DoctorSpecialty</div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">@rx.PrescribedAt.ToString("dd MMM yyyy")</small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

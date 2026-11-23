@@ -19,13 +19,33 @@ namespace HospitalManagementSystem.Data.Repositories
 
         protected static string? GetNullableString(SqlDataReader reader, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            try
+            {
+                int ordinal = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
         }
 
         protected static int GetInt32(SqlDataReader reader, string columnName)
         {
             return reader.GetInt32(reader.GetOrdinal(columnName));
+        }
+
+        protected static int? GetNullableInt32(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                int ordinal = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
         }
 
         protected static decimal GetDecimal(SqlDataReader reader, string columnName)
@@ -45,8 +65,15 @@ namespace HospitalManagementSystem.Data.Repositories
 
         protected static DateTime? GetNullableDateTime(SqlDataReader reader, string columnName)
         {
-            int ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+            try
+            {
+                int ordinal = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return null;
+            }
         }
 
         protected static object DbValue(string? value)

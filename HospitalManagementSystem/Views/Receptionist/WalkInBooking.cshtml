@@ -1,0 +1,117 @@
+@model HospitalManagementSystem.Models.WalkInBookingViewModel
+@{
+    ViewData["Title"] = "Fast Walk-In Registration & Token Issuance";
+    var doctors = ViewBag.Doctors as IEnumerable<HospitalManagementSystem.Models.Doctor> ?? Enumerable.Empty<HospitalManagementSystem.Models.Doctor>();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">FRONT DESK INTAKE</p>
+                        <h3 class="card-title mb-0" style="font-family: 'Space Grotesk', sans-serif;">Walk-In Patient Registration & Token</h3>
+                    </div>
+                    <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">&larr; Back to Reception Desk</a>
+                </div>
+
+                <p class="text-muted small mb-4">
+                    Register arriving walk-in patients directly at the front counter. System will resolve patient identity, assign the next sequential OPD token, record fee collection, and generate the arrival slip.
+                </p>
+
+                <form asp-action="WalkInBooking" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <!-- Patient Identification -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">1. Patient Identity & Contact</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Patient First Name *</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="e.g. David" required />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Patient Last Name *</label>
+                            <input asp-for="LastName" class="form-control" placeholder="e.g. Miller" required />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Gender *</label>
+                            <select asp-for="Gender" class="form-select" required>
+                                <option value="">Select Gender</option>
+                                <option>Female</option>
+                                <option>Male</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Mobile Phone Number *</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="10-digit phone" required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Email (Optional)</label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="patient@example.com" />
+                        </div>
+                    </div>
+
+                    <!-- Doctor Selection -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">2. Attending Specialist & Room</h6>
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">Select Available Doctor *</label>
+                        <select asp-for="DoctorId" class="form-select" id="doctorSelect" required>
+                            <option value="">-- Choose Consulting Specialist --</option>
+                            @foreach (var doc in doctors)
+                            {
+                                <option value="@doc.DoctorId" data-fee="@doc.ConsultationFee" data-room="@doc.RoomNumber">
+                                    @doc.FullName — @doc.Specialty (@doc.Qualification) | Room: @(string.IsNullOrWhiteSpace(doc.RoomNumber) ? "OPD" : doc.RoomNumber) | Fee: @doc.ConsultationFee.ToString("C")
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="DoctorId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">Primary Reason / Complaint</label>
+                        <input asp-for="Reason" class="form-control" placeholder="Chief medical complaint..." />
+                    </div>
+
+                    <!-- Payment Collection -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">3. Counter Fee Collection & Receipt</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Payment Method Collected *</label>
+                            <select asp-for="PaymentMethod" class="form-select" required>
+                                <option value="Cash">Cash at Counter</option>
+                                <option value="Credit / Debit Card">Credit / Debit Card</option>
+                                <option value="UPI / QR Code">UPI / QR Code</option>
+                                <option value="Corporate / TPA Insurance">Corporate / TPA Insurance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center mt-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="IsEmergency" id="walkInEmergency">
+                                <label class="form-check-label text-danger fw-bold" for="walkInEmergency">
+                                    🚨 Fast-Track as Critical Emergency
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2">
+                        <a asp-action="Dashboard" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">
+                            Generate Token & Print Arrival Slip &rarr;
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

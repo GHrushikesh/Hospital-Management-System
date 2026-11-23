@@ -1,0 +1,140 @@
+@model HospitalManagementSystem.Models.StaffUser
+@{
+    ViewData["Title"] = "Hire Clinical Staff - Doctor Portal";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">CLINICAL LEADERSHIP & HR</p>
+                        <h2 class="card-title mb-0" style="font-family: 'Space Grotesk', sans-serif;">Recruit & Hire Clinical Staff Member</h2>
+                    </div>
+                    <a asp-action="MyStaff" class="btn btn-outline-secondary btn-sm">&larr; Back to My Staff</a>
+                </div>
+
+                <div class="alert alert-info py-2 small mb-4 d-flex align-items-center gap-2">
+                    <span style="font-size: 1.2rem;">🩺</span>
+                    <div>
+                        <strong>Physician Recruitment Authority:</strong> As consulting physician, you are hiring clinical personnel directly for your department. Staff hired under your credential will be assigned to your team roster and inpatient wards.
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Hiring Supervising Physician:</span>
+                            <strong class="text-primary fs-6">@Model.HiredByDoctorName</strong>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <span class="badge text-bg-dark px-3 py-2">Clinical Lead Roster</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="HireStaff" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="HiredByDoctorId" />
+                    <input type="hidden" asp-for="HiredByDoctorName" />
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                    <!-- Personal & Account Details -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">Staff Credentials & Identity</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="FullName" class="form-label small fw-semibold">Staff Full Name *</label>
+                            <input asp-for="FullName" class="form-control" placeholder="e.g. Maria Gonzalez, RN" required />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Username" class="form-label small fw-semibold">Staff Username *</label>
+                            <input asp-for="Username" class="form-control" placeholder="e.g. maria.nurse" required />
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="PasswordHash" class="form-label small fw-semibold">Access Password *</label>
+                            <input asp-for="PasswordHash" class="form-control" type="password" placeholder="Minimum 6 characters" required />
+                            <span asp-validation-for="PasswordHash" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Role" class="form-label small fw-semibold">Designated Role *</label>
+                            <select asp-for="Role" class="form-select" required>
+                                <option value="Nurse">Staff Nurse</option>
+                                <option value="Doctor Assistant">Physician Clinical Assistant</option>
+                                <option value="Receptionist">Department Receptionist</option>
+                                <option value="Triage Officer">Triage & Vitals Officer</option>
+                                <option value="Staff">Ward Staff</option>
+                            </select>
+                            <span asp-validation-for="Role" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Qualifications, Room/Ward, Shift -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">Professional Qualifications & Physical Station</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label asp-for="Qualification" class="form-label small fw-semibold">Degrees & Medical Certifications *</label>
+                            <input asp-for="Qualification" class="form-control" placeholder="e.g. B.Sc Nursing, Critical Care Registered Nurse (CCRN), BLS/ACLS" required />
+                            <span asp-validation-for="Qualification" class="text-danger small"></span>
+                            <div class="form-text text-muted">Include university degrees, registered council licenses, and clinical certifications.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AssignedRoomOrWard" class="form-label small fw-semibold">Designated Room or Ward Station *</label>
+                            <input asp-for="AssignedRoomOrWard" class="form-control" placeholder="e.g. Ward 3B - Post-Op or ICU Bay 01 or OPD Room 102" required />
+                            <span asp-validation-for="AssignedRoomOrWard" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ShiftTiming" class="form-label small fw-semibold">Designated Shift Timing *</label>
+                            <select asp-for="ShiftTiming" class="form-select" required>
+                                <option value="Morning (07:00 - 15:00)">Morning (07:00 - 15:00)</option>
+                                <option value="Day (08:00 - 16:30)">Day (08:00 - 16:30)</option>
+                                <option value="Evening (15:00 - 23:00)">Evening (15:00 - 23:00)</option>
+                                <option value="Night (23:00 - 07:00)">Night (23:00 - 07:00)</option>
+                                <option value="Rotational Duty">Rotational Duty</option>
+                            </select>
+                            <span asp-validation-for="ShiftTiming" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Department & Contact -->
+                    <h6 class="fw-bold mb-3 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.08em; color: var(--cb-muted);">Team Assignment & Communications</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Department" class="form-label small fw-semibold">Clinical Department *</label>
+                            <input asp-for="Department" class="form-control" placeholder="e.g. Cardiology Unit, Surgical Inpatient, Triage" required />
+                            <span asp-validation-for="Department" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="JobTitle" class="form-label small fw-semibold">Official Job Title *</label>
+                            <input asp-for="JobTitle" class="form-control" placeholder="e.g. Primary Care Staff Nurse" required />
+                            <span asp-validation-for="JobTitle" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="EmployeeId" class="form-label small fw-semibold">Staff Employee ID</label>
+                            <input asp-for="EmployeeId" class="form-control" placeholder="e.g. NUR-2026-09" />
+                            <span asp-validation-for="EmployeeId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="PhoneNumber" class="form-label small fw-semibold">Phone Number *</label>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="e.g. 9811223344" required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Email" class="form-label small fw-semibold">Email Address *</label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="e.g. maria@cityhosp.test" required />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-end gap-2 pt-3 border-top">
+                        <a asp-action="MyStaff" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-4">Confirm & Hire Staff Member</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

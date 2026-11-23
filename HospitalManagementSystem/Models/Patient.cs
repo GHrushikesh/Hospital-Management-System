@@ -6,6 +6,10 @@ namespace HospitalManagementSystem.Models
     {
         public int PatientId { get; set; }
 
+        [StringLength(50)]
+        [Display(Name = "Medical Record Number (MRN)")]
+        public string? MedicalRecordNumber { get; set; }
+
         [Required]
         [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
@@ -13,6 +17,9 @@ namespace HospitalManagementSystem.Models
         [Required]
         [StringLength(100)]
         public string LastName { get; set; } = string.Empty;
+
+        [Display(Name = "Full Name")]
+        public string FullName => $"{FirstName} {LastName}".Trim();
 
         [DataType(DataType.Date)]
         public DateTime? DateOfBirth { get; set; }

@@ -12,61 +12,211 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HospitalManagementSystem.styles.css" asp-append-version="true" />
 </head>
+@{
+    var role = Context.Session.GetString("LoggedInUserRole");
+    var isAdmin = string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) || Context.Session.GetString("AdminAuthenticated") == "true";
+    var isDoctor = string.Equals(role, "Doctor", StringComparison.OrdinalIgnoreCase);
+    var isReceptionist = string.Equals(role, "Receptionist", StringComparison.OrdinalIgnoreCase);
+    var isStaff = !isAdmin && !isDoctor && !isReceptionist && !string.IsNullOrWhiteSpace(role);
+    var isGuest = !isAdmin && !isDoctor && !isReceptionist && !isStaff;
+    var userName = Context.Session.GetString("LoggedInUserName") ?? (isAdmin ? Context.Session.GetString("AdminUsername") : null);
+}
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm app-header">
+        <nav class="navbar navbar-expand-lg app-header">
             <div class="container">
-                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index"><span class="brand-mark">+</span>CareBridge Hospital</a>
+                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">+</span>
+                    @if (isAdmin)
+                    {
+                        <span>CareBridge <span class="badge bg-dark ms-1" style="font-size:0.65rem; letter-spacing:0.05em;">ADMIN</span></span>
+                    }
+                    else if (isDoctor)
+                    {
+                        <span>CareBridge <span class="badge bg-secondary ms-1" style="font-size:0.65rem; letter-spacing:0.05em;">DOCTOR PORTAL</span></span>
+                    }
+                    else if (isReceptionist)
+                    {
+                        <span>CareBridge <span class="badge bg-primary ms-1" style="font-size:0.65rem; letter-spacing:0.05em; background-color: var(--cb-slate) !important;">RECEPTION DESK</span></span>
+                    }
+                    else if (isStaff)
+                    {
+                        <span>CareBridge <span class="badge bg-secondary ms-1" style="font-size:0.65rem; letter-spacing:0.05em;">NURSE & WARD PORTAL</span></span>
+                    }
+                    else
+                    {
+                        <span>CareBridge Hospital</span>
+                    }
+                </a>
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between align-items-center">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Dashboard</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Patient" asp-action="Index">Patients</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Doctor" asp-action="Index">Doctors</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Appointment" asp-action="GuestRequest">Book appointment</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Staff" asp-action="Login">Staff</a>
-                        </li>
-                    </ul>
 
-                    <div class="d-flex align-items-center gap-2 ms-3">
-                        @if (Context.Session.GetString("LoggedInUserName") is not null)
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between align-items-center">
+                    <ul class="navbar-nav flex-grow-1 ms-lg-3">
+                        @if (isAdmin)
                         {
-                            <span class="user-pill">
-                                @Context.Session.GetString("LoggedInUserRole") : @Context.Session.GetString("LoggedInUserName")
-                            </span>
-                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Account" asp-action="Logout">Logout</a>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">Operations Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Staff">Staff Management</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Doctor" asp-action="Index">Specialists</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Patient" asp-action="Index">Patients</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Appointment" asp-action="Index">Appointments</a>
+                            </li>
                         }
-                        else if (Context.Session.GetString("AdminAuthenticated") == "true")
+                        else if (isDoctor)
                         {
-                            <span class="user-pill">
-                                Admin : @Context.Session.GetString("AdminUsername")
-                            </span>
-                            <a class="btn btn-outline-secondary btn-sm" asp-area="" asp-controller="Admin" asp-action="Logout">Logout</a>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="DoctorAccount" asp-action="Dashboard">Clinical Desk</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="DoctorAccount" asp-action="MyStaff">My Staff Team</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="DoctorAccount" asp-action="HireStaff">Hire Staff</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Staff" asp-action="WardOccupancy">Ward & Bed Status</a>
+                            </li>
+                        }
+                        else if (isReceptionist)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Receptionist" asp-action="Dashboard">Front Desk Cockpit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Staff" asp-action="EmergencyQueue">🚨 Central ER Triage</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Receptionist" asp-action="WalkInBooking">Walk-In Fast Booking</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Patient" asp-action="Index">Patient Master Index</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Staff" asp-action="WardOccupancy">Bed Occupancy</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Receptionist" asp-action="PatientLocator">Patient / Room Locator</a>
+                            </li>
+                        }
+                        else if (isStaff)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Staff" asp-action="Dashboard">Ward & Triage Cockpit</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" asp-controller="Staff" asp-action="EmergencyQueue">🚨 Central ER Triage</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Staff" asp-action="WardOccupancy">Bed & Ward Occupancy</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Patient" asp-action="Index">Patient Registration</a>
+                            </li>
                         }
                         else
                         {
-                            <span class="user-pill">Guest access</span>
-                            <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Login</a>
-                            <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Signup">Sign up</a>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Appointment" asp-action="GuestRequest">Book Consultation</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Appointment" asp-action="CheckStatus">Track Appointment</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link fw-bold text-danger" asp-controller="Appointment" asp-action="Emergency">🚨 Emergency 24/7</a>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2 ms-lg-3 mt-3 mt-lg-0">
+                        @if (isGuest)
+                        {
+                            <span class="user-pill">Public Guest</span>
+                            <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Staff / Doctor Portal</a>
+                        }
+                        else if (isDoctor)
+                        {
+                            <span class="user-pill">
+                                Dr. @userName
+                                @if (!string.IsNullOrWhiteSpace(Context.Session.GetString("DoctorRoomNumber")))
+                                {
+                                    <span class="text-muted ms-1">(@Context.Session.GetString("DoctorRoomNumber"))</span>
+                                }
+                            </span>
+                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Account" asp-action="Logout">Sign out</a>
+                        }
+                        else if (isReceptionist)
+                        {
+                            <span class="user-pill">
+                                Receptionist : @userName
+                                @if (!string.IsNullOrWhiteSpace(Context.Session.GetString("StaffAssignedRoomOrWard")))
+                                {
+                                    <span class="text-muted ms-1">[@Context.Session.GetString("StaffAssignedRoomOrWard")]</span>
+                                }
+                            </span>
+                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Account" asp-action="Logout">Sign out</a>
+                        }
+                        else if (isStaff)
+                        {
+                            <span class="user-pill">
+                                @role : @userName
+                                @if (!string.IsNullOrWhiteSpace(Context.Session.GetString("StaffAssignedRoomOrWard")))
+                                {
+                                    <span class="text-muted ms-1">[@Context.Session.GetString("StaffAssignedRoomOrWard")]</span>
+                                }
+                            </span>
+                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Account" asp-action="Logout">Sign out</a>
+                        }
+                        else if (isAdmin)
+                        {
+                            <span class="user-pill">
+                                Admin : @userName
+                            </span>
+                            <a class="btn btn-outline-secondary btn-sm" asp-controller="Admin" asp-action="Logout">Sign out</a>
                         }
                     </div>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container app-main">
+        @if (TempData["SuccessMessage"] is not null)
+        {
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <strong>Success:</strong> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] is not null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <strong>Notice:</strong> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["InfoMessage"] is not null)
+        {
+            <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                @TempData["InfoMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -77,28 +227,54 @@
             <div class="footer-grid">
                 <div class="footer-brand-block">
                     <div class="footer-brand"><span class="footer-mark">+</span>CareBridge Hospital</div>
-                    <p class="footer-meta">Clinical operations, coordinated with care.</p>
+                    <p class="footer-meta">Accredited clinical healthcare, inpatient wards, and 24/7 emergency response.</p>
                 </div>
                 <div class="footer-column">
-                    <div class="footer-heading">Portal</div>
-                    <a class="footer-link" asp-controller="Home" asp-action="Index">Dashboard</a>
-                    <a class="footer-link" asp-controller="Patient" asp-action="Index">Patients</a>
-                    <a class="footer-link" asp-controller="Doctor" asp-action="Index">Doctors</a>
-                    <a class="footer-link" asp-controller="Appointment" asp-action="Index">Appointments</a>
-                    <a class="footer-link" asp-controller="Appointment" asp-action="GuestRequest">Book an appointment</a>
-                    <a class="footer-link" asp-controller="Staff" asp-action="Login">Staff login</a>
+                    <div class="footer-heading">Hospital Portal</div>
+                    @if (isGuest)
+                    {
+                        <a class="footer-link" asp-controller="Home" asp-action="Index">Hospital Overview</a>
+                        <a class="footer-link" asp-controller="Appointment" asp-action="GuestRequest">Book Consultation</a>
+                        <a class="footer-link" asp-controller="Appointment" asp-action="CheckStatus">Track My Appointment</a>
+                        <a class="footer-link" asp-controller="Account" asp-action="Login">Medical Staff & Doctor Access</a>
+                    }
+                    else if (isDoctor)
+                    {
+                        <a class="footer-link" asp-controller="DoctorAccount" asp-action="Dashboard">Clinical Desk</a>
+                        <a class="footer-link" asp-controller="Account" asp-action="Logout">Sign out</a>
+                    }
+                    else if (isReceptionist)
+                    {
+                        <a class="footer-link" asp-controller="Receptionist" asp-action="Dashboard">Front Desk Cockpit</a>
+                        <a class="footer-link" asp-controller="Receptionist" asp-action="WalkInBooking">Walk-In Booking</a>
+                        <a class="footer-link" asp-controller="Patient" asp-action="Index">Patient Directory</a>
+                        <a class="footer-link" asp-controller="Account" asp-action="Logout">Sign out</a>
+                    }
+                    else if (isStaff)
+                    {
+                        <a class="footer-link" asp-controller="Staff" asp-action="Dashboard">Ward Desk</a>
+                        <a class="footer-link" asp-controller="Patient" asp-action="Index">Patient Directory</a>
+                        <a class="footer-link" asp-controller="Account" asp-action="Logout">Sign out</a>
+                    }
+                    else if (isAdmin)
+                    {
+                        <a class="footer-link" asp-controller="Admin" asp-action="Dashboard">Operations Dashboard</a>
+                        <a class="footer-link" asp-controller="Admin" asp-action="Staff">Staff Management</a>
+                        <a class="footer-link" asp-controller="Doctor" asp-action="Index">Doctor Directory</a>
+                        <a class="footer-link" asp-controller="Patient" asp-action="Index">Patient Master Index</a>
+                    }
                 </div>
                 <div class="footer-column">
-                    <div class="footer-heading">Support</div>
-                    <span>Reception: +1 555 014 2080</span>
-                    <span>care@carebridge.example</span>
-                    <span>Open daily, 07:00-21:00</span>
+                    <div class="footer-heading">Emergency & Triage</div>
+                    <span>🚨 24/7 Trauma Helpline: +1 555 019 9110</span>
+                    <span>OPD Appointments: +1 555 014 2080</span>
+                    <span>Emergency Response: care@carebridge.example</span>
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>&copy; 2026</span>
-                <a class="footer-link" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                <span class="footer-note">Secure hospital operations portal</span>
+                <span>&copy; @DateTime.Now.Year CareBridge Hospital Information System</span>
+                <a class="footer-link" asp-controller="Home" asp-action="Privacy">Patient Privacy & Compliance</a>
+                <span class="footer-note">HIPAA & Clinical Confidentiality Protected</span>
             </div>
         </div>
     </footer>

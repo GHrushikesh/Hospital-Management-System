@@ -15,10 +15,10 @@ namespace HospitalManagementSystem.Data.Repositories
         {
             const string query = @"
 INSERT INTO Doctors
-    (FullName, Specialty, Username, PasswordHash, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive)
+    (FullName, Specialty, Qualification, Username, PasswordHash, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive)
 OUTPUT INSERTED.DoctorId
 VALUES
-    (@FullName, @Specialty, @Username, @PasswordHash, @PhoneNumber, @Email, @RoomNumber, @Availability, @ConsultationFee, @IsActive);";
+    (@FullName, @Specialty, @Qualification, @Username, @PasswordHash, @PhoneNumber, @Email, @RoomNumber, @Availability, @ConsultationFee, @IsActive);";
 
             await using SqlConnection connection = CreateConnection();
             await connection.OpenAsync();
@@ -26,6 +26,7 @@ VALUES
             await using SqlCommand command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@FullName", doctor.FullName.Trim());
             command.Parameters.AddWithValue("@Specialty", doctor.Specialty.Trim());
+            command.Parameters.AddWithValue("@Qualification", string.IsNullOrWhiteSpace(doctor.Qualification) ? "MBBS, MD" : doctor.Qualification.Trim());
             command.Parameters.AddWithValue("@Username", doctor.Username.Trim());
             command.Parameters.AddWithValue("@PasswordHash", ComputeHash(doctor.Password ?? throw new InvalidOperationException("Doctor password is required.")));
             command.Parameters.AddWithValue("@PhoneNumber", DbValue(doctor.PhoneNumber));
@@ -45,6 +46,7 @@ VALUES
 UPDATE Doctors
 SET FullName = @FullName,
     Specialty = @Specialty,
+    Qualification = @Qualification,
     Username = @Username,
     PasswordHash = COALESCE(@PasswordHash, PasswordHash),
     PhoneNumber = @PhoneNumber,
@@ -62,6 +64,7 @@ WHERE DoctorId = @DoctorId;";
             command.Parameters.AddWithValue("@DoctorId", doctor.DoctorId);
             command.Parameters.AddWithValue("@FullName", doctor.FullName.Trim());
             command.Parameters.AddWithValue("@Specialty", doctor.Specialty.Trim());
+            command.Parameters.AddWithValue("@Qualification", string.IsNullOrWhiteSpace(doctor.Qualification) ? "MBBS, MD" : doctor.Qualification.Trim());
             command.Parameters.AddWithValue("@Username", doctor.Username.Trim());
             command.Parameters.AddWithValue("@PasswordHash", string.IsNullOrWhiteSpace(doctor.Password) ? DBNull.Value : ComputeHash(doctor.Password));
             command.Parameters.AddWithValue("@PhoneNumber", DbValue(doctor.PhoneNumber));
@@ -90,7 +93,7 @@ WHERE DoctorId = @DoctorId;";
         public async Task<Doctor?> GetByIdAsync(int doctorId)
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Qualification, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 WHERE DoctorId = @DoctorId;";
 
@@ -112,7 +115,7 @@ WHERE DoctorId = @DoctorId;";
         public async Task<IReadOnlyList<Doctor>> GetAllAsync()
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Qualification, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 ORDER BY FullName;";
 
@@ -135,10 +138,11 @@ ORDER BY FullName;";
         public async Task<IReadOnlyList<Doctor>> SearchAsync(string searchTerm)
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
+SELECT DoctorId, FullName, Specialty, Qualification, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt
 FROM Doctors
 WHERE FullName LIKE @SearchTerm
    OR Specialty LIKE @SearchTerm
+   OR Qualification LIKE @SearchTerm
    OR PhoneNumber LIKE @SearchTerm
 ORDER BY FullName;";
 
@@ -166,6 +170,7 @@ ORDER BY FullName;";
                 DoctorId = GetInt32(reader, "DoctorId"),
                 FullName = GetNullableString(reader, "FullName") ?? string.Empty,
                 Specialty = GetNullableString(reader, "Specialty") ?? string.Empty,
+                Qualification = GetNullableString(reader, "Qualification") ?? "MBBS, MD",
                 Username = GetNullableString(reader, "Username") ?? string.Empty,
                 PhoneNumber = GetNullableString(reader, "PhoneNumber"),
                 Email = GetNullableString(reader, "Email"),
@@ -180,7 +185,7 @@ ORDER BY FullName;";
         public async Task<Doctor?> AuthenticateAsync(string username, string password)
         {
             const string query = @"
-SELECT DoctorId, FullName, Specialty, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt, PasswordHash
+SELECT DoctorId, FullName, Specialty, Qualification, Username, PhoneNumber, Email, RoomNumber, Availability, ConsultationFee, IsActive, CreatedAt, PasswordHash
 FROM Doctors
 WHERE Username = @Username AND IsActive = 1;";
 
@@ -189,7 +194,16 @@ WHERE Username = @Username AND IsActive = 1;";
             await using SqlCommand command = new(query, connection);
             command.Parameters.AddWithValue("@Username", username.Trim());
             await using SqlDataReader reader = await command.ExecuteReaderAsync();
-            if (!await reader.ReadAsync() || !string.Equals(GetNullableString(reader, "PasswordHash"), ComputeHash(password), StringComparison.OrdinalIgnoreCase))
+            if (!await reader.ReadAsync())
+            {
+                return null;
+            }
+
+            var storedHash = GetNullableString(reader, "PasswordHash") ?? string.Empty;
+            var submittedHash = ComputeHash(password);
+
+            if (!string.Equals(storedHash, submittedHash, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(storedHash, password.Trim(), StringComparison.Ordinal))
             {
                 return null;
             }
@@ -197,7 +211,7 @@ WHERE Username = @Username AND IsActive = 1;";
             return MapDoctor(reader);
         }
 
-        private static string ComputeHash(string input)
+        public static string ComputeHash(string input)
         {
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input.Trim()))).ToLowerInvariant();
         }

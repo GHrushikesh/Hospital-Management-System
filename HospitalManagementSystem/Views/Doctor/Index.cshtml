@@ -1,28 +1,15 @@
-﻿@model IEnumerable<HospitalManagementSystem.Models.Doctor>
+@model IEnumerable<HospitalManagementSystem.Models.Doctor>
 @{
-    ViewData["Title"] = "Doctors";
+    ViewData["Title"] = "Medical Specialists Directory";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Doctors</h2>
-    <a asp-action="Create" class="btn btn-primary">Add Doctor</a>
+    <div>
+        <p class="eyebrow mb-1">MEDICAL FACULTY</p>
+        <h2 style="font-family: 'Space Grotesk', sans-serif;">Doctors & Specialists</h2>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">+ Add Specialist</a>
 </div>
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
 
 <!-- Search Box -->
 <div class="card shadow-sm mb-4">
@@ -33,7 +20,7 @@
                        name="searchTerm"
                        value="@ViewBag.SearchTerm"
                        class="form-control"
-                       placeholder="Search by name, specialty, or phone number..." />
+                       placeholder="Search by name, specialty, qualification, or phone number..." />
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-outline-primary">Search</button>
@@ -48,54 +35,69 @@
     </div>
 </div>
 
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Specialty</th>
-            <th>Phone</th>
-            <th>Fee</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var doctor in Model)
-            {
+<div class="schedule-panel">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
                 <tr>
-                    <td>@doctor.FullName</td>
-                    <td>@doctor.Specialty</td>
-                    <td>@(string.IsNullOrEmpty(doctor.PhoneNumber) ? "-" : doctor.PhoneNumber)</td>
-                    <td>@doctor.ConsultationFee.ToString("C")</td>
-                    <td>
-                        @if (doctor.IsActive)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inactive</span>
-                        }
-                    </td>
-                    <td class="text-end">
-                        <a asp-action="Edit" asp-route-id="@doctor.DoctorId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
-                        <form asp-action="Delete" asp-route-id="@doctor.DoctorId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to delete Dr. @doctor.FullName?');">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                        </form>
-                    </td>
+                    <th>Specialist Name</th>
+                    <th>Specialty</th>
+                    <th>Qualifications</th>
+                    <th>Room Number</th>
+                    <th>Consultation Fee</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
                 </tr>
-            }
-        }
-        else
-        {
-            <tr>
-                <td colspan="6" class="text-center text-muted py-4">
-                    @(string.IsNullOrEmpty(ViewBag.SearchTerm as string) ? "No doctors registered yet." : "No doctors found matching your search criteria.")
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var doctor in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong class="d-block" style="color: var(--cb-ink);">@doctor.FullName</strong>
+                                <span class="text-muted small">Username: @doctor.Username | Tel: @(string.IsNullOrEmpty(doctor.PhoneNumber) ? "-" : doctor.PhoneNumber)</span>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: #eef2f6; color: #2b3a4a; font-weight: 600;">@doctor.Specialty</span>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border">@doctor.Qualification</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@(string.IsNullOrWhiteSpace(doctor.RoomNumber) ? "OPD" : doctor.RoomNumber)</span>
+                            </td>
+                            <td><strong>@doctor.ConsultationFee.ToString("C")</strong></td>
+                            <td>
+                                @if (doctor.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@doctor.DoctorId" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                <form asp-action="Delete" asp-route-id="@doctor.DoctorId" method="post" class="d-inline" onsubmit="return confirm('Are you sure you want to remove Dr. @doctor.FullName?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            @(string.IsNullOrEmpty(ViewBag.SearchTerm as string) ? "No doctors registered yet." : "No doctors found matching your search criteria.")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

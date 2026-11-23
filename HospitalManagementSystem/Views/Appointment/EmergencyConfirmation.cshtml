@@ -1,0 +1,152 @@
+@model HospitalManagementSystem.Models.Appointment
+@{
+    ViewData["Title"] = $"🚨 Emergency Dispatch Pass #ER-{Model.AppointmentId}";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Live Dispatch Beacon Header -->
+        <div class="card border-0 text-white p-4 mb-4 shadow-lg text-center" 
+             style="background: linear-gradient(135deg, #b02a37 0%, #dc3545 100%); border-radius: 14px;">
+            <div class="mb-2">
+                <span style="font-size: 3rem; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));" class="pulse-beacon">🚨</span>
+            </div>
+            <span class="badge bg-white text-danger fw-bold text-uppercase px-3 py-1 mb-2 align-self-center" style="font-size: 0.75rem; letter-spacing: 0.1em;">
+                TRAUMA TEAM DISPATCH CONFIRMED
+            </span>
+            <h2 class="fw-bold mb-1" style="font-family: 'Space Grotesk', sans-serif;">
+                Emergency Intake Pass #ER-@Model.AppointmentId
+            </h2>
+            <p class="mb-0 text-white-50" style="font-size: 0.95rem;">
+                On-duty clinicians and the Central Emergency Cockpit have been notified of your incoming arrival.
+            </p>
+        </div>
+
+        <!-- Triage Level Alert -->
+        <div class="card shadow-sm border-2 mb-4" style="border-radius: 12px; border-color: #dc3545;">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Assigned Clinical Severity</span>
+                        <h4 class="mb-0 text-danger fw-bold" style="font-family: 'Space Grotesk', sans-serif;">
+                            @(string.IsNullOrWhiteSpace(Model.ESITriageLevel) ? "Level 2 - Emergent (High Risk)" : Model.ESITriageLevel)
+                        </h4>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Dispatch Timestamp</span>
+                        <div class="fw-bold text-dark">@Model.AppointmentDateTime.ToString("MMM dd, yyyy - hh:mm tt")</div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <!-- Patient Details -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.06em;">Patient Information</span>
+                            <div class="fs-5 fw-bold text-dark">@(string.IsNullOrWhiteSpace(Model.PatientName) ? "Emergency Patient" : Model.PatientName)</div>
+                            <div class="text-muted small mb-1">
+                                <strong>Phone:</strong> @(string.IsNullOrWhiteSpace(Model.PatientPhoneNumber) ? "On File" : Model.PatientPhoneNumber)
+                            </div>
+                            <div class="text-muted small">
+                                <strong>MRN / ID:</strong> #@(string.IsNullOrWhiteSpace(Model.PatientMRN) ? (Model.PatientId > 0 ? Model.PatientId.ToString("D5") : "NEW-REG") : Model.PatientMRN)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Designated Medical Specialist -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 h-100">
+                            <span class="text-muted small text-uppercase fw-bold d-block mb-2" style="font-size: 0.72rem; letter-spacing: 0.06em;">Receiving Specialist & Room</span>
+                            <div class="fs-5 fw-bold text-dark">Dr. @(string.IsNullOrWhiteSpace(Model.DoctorName) ? "On-Duty ER Consultant" : Model.DoctorName)</div>
+                            <div class="text-muted small mb-1">
+                                <strong>Department:</strong> @(string.IsNullOrWhiteSpace(Model.DoctorSpecialty) ? "Emergency Medicine" : Model.DoctorSpecialty)
+                            </div>
+                            <div class="text-danger fw-semibold small">
+                                <strong>Assigned Location:</strong> Room @(string.IsNullOrWhiteSpace(Model.DoctorRoomNumber) ? "ER Trauma Bay 1" : Model.DoctorRoomNumber) (Gate A)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Description & Vitals Handover -->
+                <div class="p-3 rounded-3 mb-4" style="background: #fff8f8; border: 1.5px dashed #f5c2c7;">
+                    <span class="text-danger small text-uppercase fw-bold d-block mb-1" style="font-size: 0.72rem; letter-spacing: 0.06em;">
+                        Clinical Triage Handover Report
+                    </span>
+                    <p class="mb-2 text-dark" style="font-size: 0.92rem;">
+                        <strong>Symptoms & Urgency:</strong> @(Model.EmergencyDescription ?? "Immediate medical attention required.")
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(Model.VitalsSummary))
+                    {
+                        <div class="badge bg-danger text-white py-1 px-2" style="font-size: 0.78rem;">
+                            @Model.VitalsSummary
+                        </div>
+                    }
+                </div>
+
+                <!-- Step-by-Step ER Arrival Instructions -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-uppercase text-dark mb-3" style="font-size: 0.8rem; letter-spacing: 0.06em;">
+                        Immediate Arrival Protocol:
+                    </h6>
+                    <div class="d-flex align-items-start gap-3 mb-2">
+                        <div class="badge bg-danger rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">1</div>
+                        <div>
+                            <strong>Navigate directly to Gate A (Trauma & Ambulance Bay).</strong>
+                            <div class="text-muted small">Do not proceed to general OPD reception. Follow the red emergency line markings on the driveway.</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3 mb-2">
+                        <div class="badge bg-danger rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">2</div>
+                        <div>
+                            <strong>Show this Emergency Pass #ER-@Model.AppointmentId or provide phone number @Model.PatientPhoneNumber.</strong>
+                            <div class="text-muted small">The triage officer and attending clinician will immediately admit the patient to the designated trauma station.</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="badge bg-danger rounded-circle p-2" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">3</div>
+                        <div>
+                            <strong>Direct Hotline Assistance:</strong>
+                            <div class="text-muted small">If condition deteriorates on the way, dial <a href="tel:5550199110" class="fw-bold text-danger">+1 555 019 9110</a> and cite Pass <strong>#ER-@Model.AppointmentId</strong> for immediate ambulance dispatch.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex flex-wrap gap-2 pt-3 border-top justify-content-between">
+                    <button onclick="window.print();" class="btn btn-outline-dark btn-sm">
+                        🖨️ Print Emergency Pass
+                    </button>
+                    <div class="d-flex gap-2">
+                        <a asp-action="CheckStatus" asp-route-phoneNumber="@Model.PatientPhoneNumber" class="btn btn-outline-secondary btn-sm">
+                            🔍 Live Queue Status
+                        </a>
+                        <a href="tel:5550199110" class="btn btn-danger btn-sm fw-bold">
+                            📞 Call ER Trauma Desk
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pulse-beacon {
+        display: inline-block;
+        animation: pulseAnimation 1.5s infinite;
+    }
+    @@keyframes pulseAnimation {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+    @@media print {
+        header, footer, nav, .btn, .pulse-beacon {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+        }
+    }
+</style>

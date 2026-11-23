@@ -1,0 +1,133 @@
+@model IReadOnlyList<HospitalManagementSystem.Models.Appointment>
+@{
+    ViewData["Title"] = "Central ER & Emergency Triage Cockpit";
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-1">EMERGENCY DEPARTMENT (ED)</p>
+        <h1 class="display-title">Central Emergency & Triage Cockpit</h1>
+        <p class="intro-copy">24/7 hospital-wide trauma incoming monitor, Emergency Severity Index (ESI) triage, and resuscitation alert dispatch.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge @(Model.Any() ? "bg-danger" : "bg-secondary") p-2 fs-6">
+            🚨 @Model.Count Active Emergency Case(s)
+        </span>
+    </div>
+</section>
+
+@if (Model.Any())
+{
+    <div class="row g-3 mb-4">
+        @foreach (var em in Model)
+        {
+            var isLevel1 = em.ESITriageLevel != null && em.ESITriageLevel.Contains("Level 1");
+            var isLevel2 = em.ESITriageLevel != null && em.ESITriageLevel.Contains("Level 2");
+
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm @(isLevel1 ? "border-danger border-3" : "border-warning border-2")" style="background: #fffcfc;">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge @(isLevel1 ? "bg-danger" : "bg-warning text-dark") px-2 py-1 mb-1">
+                                        @(string.IsNullOrWhiteSpace(em.ESITriageLevel) ? "Emergency - Awaiting Triage" : em.ESITriageLevel)
+                                    </span>
+                                    <h4 class="fw-bold mb-0 text-dark">@em.PatientName</h4>
+                                    <span class="text-muted small">MRN: @em.PatientMRN &bull; Phone: <strong>@em.PatientPhoneNumber</strong></span>
+                                </div>
+                                <span class="badge text-bg-light border text-muted">
+                                    Requested: @em.CreatedAt.ToString("HH:mm:ss")
+                                </span>
+                            </div>
+
+                            <div class="card bg-danger-subtle border-danger-subtle mb-3">
+                                <div class="card-body p-3">
+                                    <span class="text-danger fw-bold small text-uppercase d-block mb-1">🚨 Emergency Symptoms / Chief Complaint:</span>
+                                    <p class="mb-0 text-dark fw-semibold" style="font-size: 0.95rem;">
+                                        @(string.IsNullOrWhiteSpace(em.EmergencyDescription) ? em.Reason : em.EmergencyDescription)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 small mb-3">
+                                <div class="col-md-6">
+                                    <span class="text-muted d-block">Requested Specialist:</span>
+                                    <strong class="text-dark">@em.DoctorName</strong>
+                                    <span class="text-muted small d-block">@em.DoctorSpecialty (Room: @em.DoctorRoomNumber)</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted d-block">Recorded Vitals:</span>
+                                    <strong class="text-dark font-monospace">@(string.IsNullOrWhiteSpace(em.VitalsSummary) ? "Not yet recorded" : em.VitalsSummary)</strong>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(em.Notes))
+                            {
+                                <div class="p-2 bg-light rounded border small text-muted mb-3">
+                                    <strong>Triage Clinical Notes:</strong> @em.Notes
+                                </div>
+                            }
+                        </div>
+
+                        <div class="pt-3 border-top d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-semibold"
+                                    data-bs-toggle="modal" data-bs-target="#triageModal-@em.AppointmentId">
+                                🩺 Update ESI Triage & Vitals
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Triage Modal -->
+                <div class="modal fade" id="triageModal-@em.AppointmentId" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <form asp-action="TriageEmergency" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="appointmentId" value="@em.AppointmentId" />
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Clinical Triage: @em.PatientName</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Emergency Severity Index (ESI) Level *</label>
+                                        <select name="esiLevel" class="form-select" required>
+                                            <option value="Level 1 - Resuscitation (Immediate Life Threat)">Level 1 - Resuscitation (Immediate Life Threat)</option>
+                                            <option value="Level 2 - Emergent (High Risk / Confusion / Severe Pain)" selected>Level 2 - Emergent (High Risk / Severe Distress)</option>
+                                            <option value="Level 3 - Urgent (Multiple Resources Required)">Level 3 - Urgent (Multiple Resources Required)</option>
+                                            <option value="Level 4 - Less Urgent">Level 4 - Less Urgent</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Immediate Triage Vitals</label>
+                                        <input type="text" name="vitals" class="form-control" placeholder="e.g. BP: 140/90 | Pulse: 110 | Temp: 101.4F | SpO2: 94%" value="@em.VitalsSummary" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Triage Assessment & Trauma Bay Assignment</label>
+                                        <textarea name="triageNotes" class="form-control" rows="3" placeholder="Enter patient airway/breathing assessment, preliminary triage observations, assigned ER bay..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Window</button>
+                                    <button type="submit" class="btn btn-danger btn-sm fw-semibold">Save Triage Assessment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="schedule-panel p-5 text-center">
+        <div style="font-size: 2.8rem;" class="mb-2">🟢</div>
+        <h4 class="fw-bold mb-1">No Active Emergencies in Queue</h4>
+        <p class="text-muted small mb-0">Emergency trauma center status is clear. All incoming emergency alerts are currently attended.</p>
+    </div>
+}

@@ -1,0 +1,299 @@
+@model HospitalManagementSystem.Models.ReceptionistDashboardViewModel
+@{
+    ViewData["Title"] = "Front Desk & Reception Desk - " + Model.FullName;
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-1">FRONT DESK & PATIENT ADMISSIONS</p>
+        <h1 class="display-title">Hospital Reception Desk</h1>
+        <p class="intro-copy">
+            <span class="badge text-bg-dark me-2">Counter: @Model.CounterOrDesk</span>
+            <span class="badge text-bg-light border me-2">Shift: @Model.ShiftTiming</span>
+            <span class="badge text-bg-secondary">Officer: @Model.FullName (@Model.Qualification)</span>
+        </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="WalkInBooking" class="btn btn-primary dashboard-action">
+            + Fast Walk-In Booking & Issue Token &rarr;
+        </a>
+        <a asp-action="PatientLocator" class="btn btn-outline-secondary dashboard-action">
+            Patient / Room Locator
+        </a>
+    </div>
+</section>
+
+<!-- Front Desk Daily Metrics -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Tokens Issued Today</div>
+                <p class="metric-value">@Model.TodayTokensIssued</p>
+                <span class="text-muted small">OPD Queue Numbers Generated</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Waiting in Waiting Bays</div>
+                <p class="metric-value text-primary" style="color: var(--cb-slate) !important;">@Model.TodayWaitingInClinic</p>
+                <span class="text-muted small">Checked in & awaiting call</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>Completed Consults</div>
+                <p class="metric-value text-success">@Model.TodayCompletedVisits</p>
+                <span class="text-muted small">Cleared from doctor clinics</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card metric-card">
+            <div class="card-body">
+                <div class="metric-label"><span class="metric-dot"></span>OPD Fees Collected</div>
+                <p class="metric-value">@Model.TodayFeesCollected.ToString("C")</p>
+                <span class="text-muted small">Cash, Card & UPI received</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 1: Live Doctor OPD Availability & Queue Board -->
+<div class="schedule-panel mb-5">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">LIVE OPD CLINIC STATUS</p>
+            <h2>Doctors in Clinic & Active Room Directory</h2>
+        </div>
+        <span class="schedule-date">Real-time room occupancy and queue counters</span>
+    </div>
+
+    @if (Model.ActiveDoctors.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Consulting Specialist</th>
+                        <th>Department</th>
+                        <th>Consultation Room</th>
+                        <th>Standard Fee</th>
+                        <th>Today's Total Booked</th>
+                        <th>Patients in Waiting Area</th>
+                        <th>Next Token #</th>
+                        <th class="text-end">Desk Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.ActiveDoctors)
+                    {
+                        <tr>
+                            <td>
+                                <strong class="d-block" style="color: var(--cb-ink);">@doc.FullName</strong>
+                                <span class="text-muted small">@doc.Qualification</span>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: #eef2f6; color: #2b3a4a; font-weight: 600;">@doc.Specialty</span>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border fw-bold text-dark px-2 py-1" style="font-size: 0.85rem;">
+                                    @doc.RoomNumber
+                                </span>
+                            </td>
+                            <td><strong>@doc.ConsultationFee.ToString("C")</strong></td>
+                            <td>@doc.TotalBookedToday</td>
+                            <td>
+                                @if (doc.PatientsWaiting > 0)
+                                {
+                                    <span class="badge bg-primary text-white">@doc.PatientsWaiting waiting</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Clear</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge text-bg-dark font-monospace" style="font-size: 0.82rem;">Token #@doc.NextTokenNumber</span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="WalkInBooking" class="btn btn-outline-primary btn-sm">
+                                    Book Patient &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No consulting doctors listed for today.</div>
+    }
+</div>
+
+<!-- Section 2: Central Reception Desk & Token Calling Queue -->
+<div class="schedule-panel" id="tokens">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">TODAY'S FRONT DESK ARRIVALS & TOKENS</p>
+            <h2>Arrival Check-In, Fee Collection & Token Slips</h2>
+        </div>
+        <span class="schedule-date">Manage arrival tokens, take payments, and issue printed slips</span>
+    </div>
+
+    @if (Model.TodayAppointments.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Token #</th>
+                        <th>Patient</th>
+                        <th>Doctor & Room</th>
+                        <th>Time</th>
+                        <th>Payment Status</th>
+                        <th>Visit Status</th>
+                        <th class="text-end">Desk Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appt in Model.TodayAppointments)
+                    {
+                        <tr class="@(appt.IsEmergency ? "table-danger" : "")">
+                            <td>
+                                @if (appt.TokenNumber.HasValue)
+                                {
+                                    <span class="badge bg-dark text-white font-monospace" style="font-size: 0.9rem; padding: 0.4rem 0.6rem;">
+                                        #@appt.TokenNumber
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-light border text-muted">No Token</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-bold" style="color: var(--cb-ink);">@appt.PatientName</div>
+                                <span class="text-muted small">MRN: @appt.PatientMRN | Tel: @appt.PatientPhoneNumber</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@appt.DoctorName</div>
+                                <span class="badge text-bg-light border small">Room: @(string.IsNullOrWhiteSpace(appt.DoctorRoomNumber) ? "OPD" : appt.DoctorRoomNumber)</span>
+                            </td>
+                            <td>
+                                <div>@appt.AppointmentDateTime.ToString("hh:mm tt")</div>
+                            </td>
+                            <td>
+                                @if (appt.PaymentStatus.StartsWith("Paid"))
+                                {
+                                    <span class="badge bg-success">
+                                        @appt.PaymentAmount.ToString("C") Paid (@appt.PaymentMethod)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        Fee Due: @appt.DoctorConsultationFee.ToString("C")
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (appt.Status == "Checked-In")
+                                {
+                                    <span class="badge bg-info text-dark">Checked In & Waiting</span>
+                                }
+                                else if (appt.Status == "Completed")
+                                {
+                                    <span class="badge bg-secondary">Completed</span>
+                                }
+                                else if (appt.Status.Contains("Emergency"))
+                                {
+                                    <span class="badge bg-danger">🚨 Emergency</span>
+                                }
+                                else if (appt.Status == "Approved")
+                                {
+                                    <span class="badge bg-primary">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border">@appt.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (!appt.TokenNumber.HasValue && appt.Status != "Cancelled" && appt.Status != "Rejected")
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#issueTokenModal-@appt.AppointmentId">
+                                        Collect Fee & Issue Token &rarr;
+                                    </button>
+
+                                    <!-- Issue Token Modal -->
+                                    <div class="modal fade text-start" id="issueTokenModal-@appt.AppointmentId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form asp-action="IssueToken" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Patient Arrival: Issue OPD Token</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-light border small mb-3">
+                                                            <strong>Patient:</strong> @appt.PatientName (@appt.PatientMRN)<br />
+                                                            <strong>Doctor:</strong> @appt.DoctorName<br />
+                                                            <strong>Room:</strong> @appt.DoctorRoomNumber<br />
+                                                            <strong>Scheduled Slot:</strong> @appt.AppointmentDateTime.ToString("hh:mm tt - dd MMM yyyy")
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Consultation Fee to Collect</label>
+                                                            <input type="number" step="10" name="feeAmount" class="form-control" value="@appt.DoctorConsultationFee" required />
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-semibold">Payment Method</label>
+                                                            <select name="paymentMethod" class="form-select" required>
+                                                                <option value="Cash">Cash at Counter</option>
+                                                                <option value="Credit / Debit Card">Credit / Debit Card</option>
+                                                                <option value="UPI / Online">UPI / QR Code</option>
+                                                                <option value="Insurance / Corporate">Insurance TPA / Corporate</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Window</button>
+                                                        <button type="submit" class="btn btn-success btn-sm">Collect Payment & Print Token Slip &rarr;</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (appt.TokenNumber.HasValue)
+                                {
+                                    <a asp-action="PrintSlip" asp-route-id="@appt.AppointmentId" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                        🖨️ Print Token Slip
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No appointment arrivals recorded today. Use the walk-in booking button to register new arrivals.</div>
+    }
+</div>

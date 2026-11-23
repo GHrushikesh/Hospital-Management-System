@@ -1,38 +1,88 @@
 @model HospitalManagementSystem.Models.Appointment
 @{
-    ViewData["Title"] = "Book Appointment";
+    ViewData["Title"] = "Schedule Hospital Appointment";
+    var patients = ViewBag.Patients as IEnumerable<HospitalManagementSystem.Models.Patient> ?? Enumerable.Empty<HospitalManagementSystem.Models.Patient>();
+    var doctors = ViewBag.Doctors as IEnumerable<HospitalManagementSystem.Models.Doctor> ?? Enumerable.Empty<HospitalManagementSystem.Models.Doctor>();
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <div class="card shadow-sm">
-            <div class="card-body">
-                <h3 class="card-title mb-3">Book Appointment</h3>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">CLINICAL SCHEDULING</p>
+                        <h3 class="card-title mb-0" style="font-family: 'Space Grotesk', sans-serif;">Schedule Consultation</h3>
+                    </div>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">&larr; Back to List</a>
+                </div>
+
                 <form asp-action="Create" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
                     <div class="mb-3">
-                        <label class="form-label">Patient</label>
-                        <select asp-for="PatientId" class="form-select" asp-items="@(new SelectList(ViewBag.Patients, "PatientId", "FirstName"))"></select>
+                        <label class="form-label small fw-semibold">Select Registered Patient *</label>
+                        <select asp-for="PatientId" class="form-select" required>
+                            <option value="">-- Choose Patient --</option>
+                            @foreach (var p in patients)
+                            {
+                                <option value="@p.PatientId">@p.FirstName @p.LastName (@p.MedicalRecordNumber | Tel: @p.PhoneNumber)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="PatientId" class="text-danger small"></span>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Doctor</label>
-                        <select asp-for="DoctorId" class="form-select" asp-items="@(new SelectList(ViewBag.Doctors, "DoctorId", "FullName"))"></select>
+                        <label class="form-label small fw-semibold">Select Attending Specialist *</label>
+                        <select asp-for="DoctorId" class="form-select" required>
+                            <option value="">-- Choose Specialist (Qualification & Room) --</option>
+                            @foreach (var d in doctors)
+                            {
+                                <option value="@d.DoctorId">@d.FullName — @d.Specialty (@d.Qualification) [Room: @d.RoomNumber]</option>
+                            }
+                        </select>
+                        <span asp-validation-for="DoctorId" class="text-danger small"></span>
                     </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="AppointmentDateTime" class="form-label small fw-semibold">Consultation Date & Time *</label>
+                            <input asp-for="AppointmentDateTime" class="form-control" type="datetime-local" required />
+                            <span asp-validation-for="AppointmentDateTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label small fw-semibold">Initial Status</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Checked-In">Checked-In</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label asp-for="AppointmentDateTime" class="form-label"></label>
-                        <input asp-for="AppointmentDateTime" class="form-control" type="datetime-local" />
+                        <label asp-for="Reason" class="form-label small fw-semibold">Clinical Reason / Complaint *</label>
+                        <input asp-for="Reason" class="form-control" placeholder="Purpose of appointment..." required />
+                        <span asp-validation-for="Reason" class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="Reason" class="form-label"></label>
-                        <input asp-for="Reason" class="form-control" />
+
+                    <div class="mb-4">
+                        <label asp-for="Notes" class="form-label small fw-semibold">Staff Administrative Notes</label>
+                        <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Internal remarks or patient directions..."></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="Notes" class="form-label"></label>
-                        <textarea asp-for="Notes" class="form-control"></textarea>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Back to Schedule</a>
+                        <button class="btn btn-primary px-4" type="submit">Schedule Visit &rarr;</button>
                     </div>
-                    <button class="btn btn-primary" type="submit">Save</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

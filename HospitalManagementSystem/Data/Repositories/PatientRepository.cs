@@ -11,17 +11,23 @@ namespace HospitalManagementSystem.Data.Repositories
 
         public async Task<int> AddAsync(Patient patient)
         {
+            if (string.IsNullOrWhiteSpace(patient.MedicalRecordNumber))
+            {
+                patient.MedicalRecordNumber = GenerateMrn();
+            }
+
             const string query = @"
 INSERT INTO Patients
-    (FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup, EmergencyContactName, EmergencyContactNumber)
+    (MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup, EmergencyContactName, EmergencyContactNumber)
 OUTPUT INSERTED.PatientId
 VALUES
-    (@FirstName, @LastName, @DateOfBirth, @Gender, @PhoneNumber, @Email, @Address, @BloodGroup, @EmergencyContactName, @EmergencyContactNumber);";
+    (@MedicalRecordNumber, @FirstName, @LastName, @DateOfBirth, @Gender, @PhoneNumber, @Email, @Address, @BloodGroup, @EmergencyContactName, @EmergencyContactNumber);";
 
             await using SqlConnection connection = CreateConnection();
             await connection.OpenAsync();
 
             await using SqlCommand command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@MedicalRecordNumber", DbValue(patient.MedicalRecordNumber));
             command.Parameters.AddWithValue("@FirstName", patient.FirstName.Trim());
             command.Parameters.AddWithValue("@LastName", patient.LastName.Trim());
             command.Parameters.AddWithValue("@DateOfBirth", (object?)patient.DateOfBirth ?? DBNull.Value);
@@ -37,11 +43,84 @@ VALUES
             return Convert.ToInt32(result);
         }
 
+        public async Task<Patient?> GetByPhoneNumberAsync(string phoneNumber)
+        {
+            const string query = @"
+SELECT TOP 1 PatientId, MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
+       EmergencyContactName, EmergencyContactNumber, CreatedAt
+FROM Patients
+WHERE PhoneNumber = @PhoneNumber;";
+
+            await using SqlConnection connection = CreateConnection();
+            await connection.OpenAsync();
+
+            await using SqlCommand command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@PhoneNumber", phoneNumber.Trim());
+
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+            {
+                return null;
+            }
+
+            return MapPatient(reader);
+        }
+
+        public async Task<Patient?> GetByPhoneAndNameAsync(string phoneNumber, string firstName, string lastName)
+        {
+            const string query = @"
+SELECT TOP 1 PatientId, MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
+       EmergencyContactName, EmergencyContactNumber, CreatedAt
+FROM Patients
+WHERE PhoneNumber = @PhoneNumber
+  AND LOWER(TRIM(FirstName)) = LOWER(TRIM(@FirstName))
+  AND LOWER(TRIM(LastName)) = LOWER(TRIM(@LastName));";
+
+            await using SqlConnection connection = CreateConnection();
+            await connection.OpenAsync();
+
+            await using SqlCommand command = new SqlCommand(query, connection);
+            command.Parameters.AddWithValue("@PhoneNumber", phoneNumber.Trim());
+            command.Parameters.AddWithValue("@FirstName", firstName.Trim());
+            command.Parameters.AddWithValue("@LastName", lastName.Trim());
+
+            await using SqlDataReader reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+            {
+                return null;
+            }
+
+            return MapPatient(reader);
+        }
+
+        public async Task<int> GetOrCreatePatientAsync(string firstName, string lastName, string gender, string phoneNumber, string? email = null)
+        {
+            // Identity resolution: Match by Phone + Full Name
+            // Ensures multiple family members or dependents sharing a single mobile number maintain separate, uncontaminated EHR records
+            var existing = await GetByPhoneAndNameAsync(phoneNumber, firstName, lastName);
+            if (existing is not null)
+            {
+                return existing.PatientId;
+            }
+
+            return await AddAsync(new Patient
+            {
+                MedicalRecordNumber = GenerateMrn(),
+                FirstName = firstName.Trim(),
+                LastName = lastName.Trim(),
+                Gender = gender.Trim(),
+                PhoneNumber = phoneNumber.Trim(),
+                Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
+                EmergencyContactNumber = phoneNumber.Trim()
+            });
+        }
+
         public async Task<bool> UpdateAsync(Patient patient)
         {
             const string query = @"
 UPDATE Patients
-SET FirstName = @FirstName,
+SET MedicalRecordNumber = COALESCE(@MedicalRecordNumber, MedicalRecordNumber),
+    FirstName = @FirstName,
     LastName = @LastName,
     DateOfBirth = @DateOfBirth,
     Gender = @Gender,
@@ -58,6 +137,7 @@ WHERE PatientId = @PatientId;";
 
             await using SqlCommand command = new SqlCommand(query, connection);
             command.Parameters.AddWithValue("@PatientId", patient.PatientId);
+            command.Parameters.AddWithValue("@MedicalRecordNumber", DbValue(patient.MedicalRecordNumber));
             command.Parameters.AddWithValue("@FirstName", patient.FirstName.Trim());
             command.Parameters.AddWithValue("@LastName", patient.LastName.Trim());
             command.Parameters.AddWithValue("@DateOfBirth", (object?)patient.DateOfBirth ?? DBNull.Value);
@@ -88,7 +168,7 @@ WHERE PatientId = @PatientId;";
         public async Task<Patient?> GetByIdAsync(int patientId)
         {
             const string query = @"
-SELECT PatientId, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
+SELECT PatientId, MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
        EmergencyContactName, EmergencyContactNumber, CreatedAt
 FROM Patients
 WHERE PatientId = @PatientId;";
@@ -111,7 +191,7 @@ WHERE PatientId = @PatientId;";
         public async Task<IReadOnlyList<Patient>> GetAllAsync()
         {
             const string query = @"
-SELECT PatientId, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
+SELECT PatientId, MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
        EmergencyContactName, EmergencyContactNumber, CreatedAt
 FROM Patients
 ORDER BY CreatedAt DESC;";
@@ -135,13 +215,14 @@ ORDER BY CreatedAt DESC;";
         public async Task<IReadOnlyList<Patient>> SearchAsync(string searchTerm)
         {
             const string query = @"
-SELECT PatientId, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
+SELECT PatientId, MedicalRecordNumber, FirstName, LastName, DateOfBirth, Gender, PhoneNumber, Email, Address, BloodGroup,
        EmergencyContactName, EmergencyContactNumber, CreatedAt
 FROM Patients
 WHERE FirstName LIKE @SearchTerm
    OR LastName LIKE @SearchTerm
    OR PhoneNumber LIKE @SearchTerm
    OR Email LIKE @SearchTerm
+   OR MedicalRecordNumber LIKE @SearchTerm
 ORDER BY CreatedAt DESC;";
 
             List<Patient> patients = new List<Patient>();
@@ -166,6 +247,7 @@ ORDER BY CreatedAt DESC;";
             return new Patient
             {
                 PatientId = GetInt32(reader, "PatientId"),
+                MedicalRecordNumber = GetNullableString(reader, "MedicalRecordNumber") ?? $"MRN-{GetInt32(reader, "PatientId"):D5}",
                 FirstName = GetNullableString(reader, "FirstName") ?? string.Empty,
                 LastName = GetNullableString(reader, "LastName") ?? string.Empty,
                 DateOfBirth = GetNullableDateTime(reader, "DateOfBirth"),
@@ -178,6 +260,11 @@ ORDER BY CreatedAt DESC;";
                 EmergencyContactNumber = GetNullableString(reader, "EmergencyContactNumber"),
                 CreatedAt = GetDateTime(reader, "CreatedAt")
             };
+        }
+
+        private static string GenerateMrn()
+        {
+            return $"MRN-{DateTime.UtcNow:yyMM}-{Random.Shared.Next(1000, 9999)}";
         }
     }
 }

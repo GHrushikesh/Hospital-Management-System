@@ -1,0 +1,101 @@
+@model IReadOnlyList<HospitalManagementSystem.Models.StaffUser>
+@{
+    ViewData["Title"] = "Staff Directory & Ward Rosters";
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-1">HUMAN RESOURCES & CLINICAL ROSTER</p>
+        <h1 class="display-title">Staff Directory & Ward Allocation</h1>
+        <p class="intro-copy">Manage nursing staff, triage officers, receptionists, qualifications, designated room/ward assignments, and hiring doctors.</p>
+    </div>
+    <div class="d-flex align-items-center">
+        <span class="badge text-bg-light border px-3 py-2 text-muted">
+            ℹ️ Staff are recruited directly by Doctors & Clinical Leads
+        </span>
+    </div>
+</section>
+
+@if (TempData["InfoMessage"] != null)
+{
+    <div class="alert alert-info py-2 small mb-4">
+        @TempData["InfoMessage"]
+    </div>
+}
+
+<div class="schedule-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">ROSTER ASSIGNMENTS</p>
+            <h2>Active Staff & Assigned Rooms / Wards (@Model.Count)</h2>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Role & Department</th>
+                        <th>Hired By Doctor</th>
+                        <th>Qualifications</th>
+                        <th>Assigned Room / Ward</th>
+                        <th>Designated Shift</th>
+                        <th>Contact</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var staff in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong class="d-block" style="color: var(--cb-ink);">@staff.FullName</strong>
+                                <span class="text-muted small">Username: @staff.Username | ID: @(string.IsNullOrWhiteSpace(staff.EmployeeId) ? "—" : staff.EmployeeId)</span>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border fw-semibold">@staff.Role</span>
+                                <div class="text-muted small mt-1">@staff.Department</div>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-primary-subtle text-primary border border-primary-subtle fw-semibold">
+                                    👨‍⚕️ @(string.IsNullOrWhiteSpace(staff.HiredByDoctorName) ? "Clinical Chief / Board" : staff.HiredByDoctorName)
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-secondary font-monospace" style="font-size: 0.76rem;">
+                                    @(string.IsNullOrWhiteSpace(staff.Qualification) ? "Not Specified" : staff.Qualification)
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="text-dark">@(string.IsNullOrWhiteSpace(staff.AssignedRoomOrWard) ? "General Floor" : staff.AssignedRoomOrWard)</strong>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border text-dark">
+                                    @(string.IsNullOrWhiteSpace(staff.ShiftTiming) ? "General Duty" : staff.ShiftTiming)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small">@staff.PhoneNumber</div>
+                                <div class="text-muted small">@staff.Email</div>
+                            </td>
+                            <td class="text-end">
+                                <form asp-action="DeleteStaff" method="post" class="d-inline" onsubmit="return confirm('Remove staff member @staff.FullName?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@staff.StaffUserId" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No staff members have been registered yet.</div>
+    }
+</div>

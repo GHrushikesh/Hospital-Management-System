@@ -1,79 +1,98 @@
 @model HospitalManagementSystem.Models.Patient
 @{
-    ViewData["Title"] = "Edit Patient";
+    ViewData["Title"] = "Edit Patient - " + Model.FirstName + " " + Model.LastName;
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <div class="card shadow-sm">
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="card-title mb-0">Edit Patient</h3>
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Back to List</a>
+                    <div>
+                        <p class="eyebrow mb-1">PATIENT FILE UPDATE</p>
+                        <h3 class="card-title mb-0" style="font-family: 'Space Grotesk', sans-serif;">Edit Patient Record</h3>
+                    </div>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">&larr; Back to Directory</a>
                 </div>
 
                 <form asp-action="Edit" asp-route-id="@Model.PatientId" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="PatientId" />
                     <input type="hidden" asp-for="CreatedAt" />
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
 
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        <div class="col-md-12">
+                            <label asp-for="MedicalRecordNumber" class="form-label small fw-semibold">Medical Record Number (MRN)</label>
+                            <input asp-for="MedicalRecordNumber" class="form-control font-monospace" readonly style="background-color: #f7f5f1;" />
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" />
-                            <span asp-validation-for="LastName" class="text-danger"></span>
+                            <label asp-for="FirstName" class="form-label small fw-semibold">First Name *</label>
+                            <input asp-for="FirstName" class="form-control" required />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="DateOfBirth" class="form-label"></label>
+                            <label asp-for="LastName" class="form-label small fw-semibold">Last Name *</label>
+                            <input asp-for="LastName" class="form-control" required />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Gender" class="form-label small fw-semibold">Gender *</label>
+                            <select asp-for="Gender" class="form-select" required>
+                                <option>Female</option>
+                                <option>Male</option>
+                                <option>Other</option>
+                            </select>
+                            <span asp-validation-for="Gender" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="DateOfBirth" class="form-label small fw-semibold">Date of Birth</label>
                             <input asp-for="DateOfBirth" class="form-control" type="date" />
-                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                            <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="BloodGroup" class="form-label small fw-semibold">Blood Group</label>
+                            <select asp-for="BloodGroup" class="form-select">
+                                <option value="">Unknown</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                            <span asp-validation-for="BloodGroup" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="Gender" class="form-label"></label>
-                            <input asp-for="Gender" class="form-control" />
-                            <span asp-validation-for="Gender" class="text-danger"></span>
+                            <label asp-for="PhoneNumber" class="form-label small fw-semibold">Phone / Mobile *</label>
+                            <input asp-for="PhoneNumber" class="form-control" required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="PhoneNumber" class="form-label"></label>
-                            <input asp-for="PhoneNumber" class="form-control" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" class="form-control" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="BloodGroup" class="form-label"></label>
-                            <input asp-for="BloodGroup" class="form-control" />
-                            <span asp-validation-for="BloodGroup" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="EmergencyContactName" class="form-label"></label>
-                            <input asp-for="EmergencyContactName" class="form-control" />
-                            <span asp-validation-for="EmergencyContactName" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="EmergencyContactNumber" class="form-label"></label>
-                            <input asp-for="EmergencyContactNumber" class="form-control" />
-                            <span asp-validation-for="EmergencyContactNumber" class="text-danger"></span>
+                            <label asp-for="Email" class="form-label small fw-semibold">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
                         <div class="col-12">
-                            <label asp-for="Address" class="form-label"></label>
-                            <textarea asp-for="Address" class="form-control" rows="3"></textarea>
-                            <span asp-validation-for="Address" class="text-danger"></span>
+                            <label asp-for="Address" class="form-label small fw-semibold">Residential Address</label>
+                            <textarea asp-for="Address" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EmergencyContactName" class="form-label small fw-semibold">Emergency Contact Name</label>
+                            <input asp-for="EmergencyContactName" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EmergencyContactNumber" class="form-label small fw-semibold">Emergency Contact Phone</label>
+                            <input asp-for="EmergencyContactNumber" class="form-control" />
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <button class="btn btn-primary" type="submit">Update Patient</button>
-                        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                        <button class="btn btn-primary px-4" type="submit">Update Patient File &rarr;</button>
                     </div>
                 </form>
             </div>

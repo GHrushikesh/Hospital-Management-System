@@ -1,0 +1,332 @@
+@model HospitalManagementSystem.Models.WardOccupancyViewModel
+@{
+    ViewData["Title"] = "Ward & Bed Occupancy Management";
+    var wards = Model.Beds.GroupBy(b => b.WardName).OrderBy(g => g.Key).ToList();
+}
+
+<section class="dashboard-intro mb-4">
+    <div>
+        <p class="eyebrow mb-1">INPATIENT CENSUS & BED MANAGEMENT</p>
+        <h1 class="display-title">Ward & Bed Occupancy</h1>
+        <p class="intro-copy">Live inpatient bed inventory, admission allocation, and real-time bed discharge operations.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge text-bg-light border px-3 py-2 fw-semibold" style="font-size: 0.85rem;">
+            Hospital Occupancy: <strong class="@(Model.OccupancyPercentage >= 80 ? "text-danger" : "text-success")">@Model.OccupancyPercentage%</strong>
+        </span>
+    </div>
+</section>
+
+<!-- Occupancy Metrics Summary -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="metric-card p-3">
+            <span class="metric-label">TOTAL OPERATIONAL BEDS</span>
+            <div class="metric-value">@Model.TotalBeds</div>
+            <div class="metric-hint">Active inpatient inventory</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="metric-card p-3" style="border-left: 4px solid #dc3545;">
+            <span class="metric-label text-danger">OCCUPIED BEDS</span>
+            <div class="metric-value text-danger">@Model.OccupiedBeds</div>
+            <div class="metric-hint">Current inpatients admitted</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="metric-card p-3" style="border-left: 4px solid #198754;">
+            <span class="metric-label text-success">VACANT & READY BEDS</span>
+            <div class="metric-value text-success">@Model.VacantBeds</div>
+            <div class="metric-hint">Available for immediate intake</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="metric-card p-3">
+            <span class="metric-label">BED OCCUPANCY GAUGE</span>
+            <div class="metric-value">@Model.OccupancyPercentage<small style="font-size: 1.1rem;">%</small></div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar @(Model.OccupancyPercentage >= 80 ? "bg-danger" : "bg-primary")" role="progressbar" style="width: @Model.OccupancyPercentage%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wards and Beds Grid -->
+@foreach (var ward in wards)
+{
+    var wardBeds = ward.ToList();
+    var wardOccupied = wardBeds.Count(b => b.Status == "Occupied");
+    var wardTotal = wardBeds.Count;
+    var wardPct = wardTotal > 0 ? Math.Round((double)wardOccupied / wardTotal * 100, 0) : 0;
+
+    <div class="schedule-panel mb-4">
+        <div class="section-heading mb-3 pb-2 border-bottom">
+            <div>
+                <span class="badge text-bg-dark me-2">@wardBeds.First().Floor</span>
+                <span class="badge text-bg-light border me-2">Type: @wardBeds.First().BedType</span>
+                <h3 class="d-inline-block align-middle mb-0 fs-5 fw-bold" style="color: var(--cb-ink);">@ward.Key</h3>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="small text-muted">Occupancy: <strong>@wardOccupied / @wardTotal</strong> beds (@wardPct%)</span>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var bed in wardBeds)
+            {
+                <div class="col-md-6 col-xl-3">
+                    @if (bed.Status == "Occupied")
+                    {
+                        <div class="card h-100 shadow-sm border-danger-subtle" style="background: #fffcfc; border-width: 1.5px;">
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-danger px-2 py-1">Bed @bed.BedNumber</span>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">Occupied</span>
+                                    </div>
+
+                                    <h6 class="fw-bold mb-1 text-dark">@bed.PatientName</h6>
+                                    <div class="text-muted small mb-2">
+                                        MRN: <span class="font-monospace fw-semibold text-dark">@bed.PatientMRN</span>
+                                    </div>
+
+                                    <div class="p-2 rounded bg-light border small mb-2">
+                                        <div class="text-truncate"><strong>Attending:</strong> @bed.DoctorName</div>
+                                        <div class="text-muted small">@bed.DoctorSpecialty</div>
+                                        <div class="text-muted small mt-1">
+                                            <strong>Admitted:</strong> @bed.AdmittedAt?.ToString("dd MMM, HH:mm")
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(bed.AdmissionNotes))
+                                    {
+                                        <div class="small text-muted fst-italic mb-2" style="font-size: 0.8rem; line-height: 1.3;">
+                                            &ldquo;@bed.AdmissionNotes&rdquo;
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="pt-2 border-top mt-2">
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100 fw-semibold"
+                                            data-bs-toggle="modal" data-bs-target="#dischargeModal-@bed.BedId">
+                                        Process Discharge & Clear Bed &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Discharge Modal -->
+                        <div class="modal fade" id="dischargeModal-@bed.BedId" tabindex="-1" aria-labelledby="dischargeLabel-@bed.BedId" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form asp-action="DischargePatient" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="bedId" value="@bed.BedId" />
+                                        <div class="modal-header bg-light">
+                                            <h5 class="modal-title" id="dischargeLabel-@bed.BedId">
+                                                Process Inpatient Discharge: Bed @bed.BedNumber
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="alert alert-light border py-2 small mb-3">
+                                                <strong>Inpatient:</strong> @bed.PatientName (@bed.PatientMRN)<br />
+                                                <strong>Ward:</strong> @bed.WardName | <strong>Attending:</strong> @bed.DoctorName
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Attending Physician Discharge Summary / Protocol *</label>
+                                                <textarea name="dischargeSummary" class="form-control" rows="3" placeholder="Enter discharge advice, condition upon discharge, medications to continue at home, and follow-up appointment date..." required>Patient condition stable. Vitals normal. Discharge approved by attending physician. Oral medications prescribed.</textarea>
+                                            </div>
+                                            <p class="text-muted small mb-0">
+                                                Confirming will permanently archive this inpatient stay in the Bed Admission Log and return Bed @bed.BedNumber to vacant inventory.
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Window</button>
+                                            <button type="submit" class="btn btn-danger btn-sm fw-semibold">Confirm Discharge & Archive Stay</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card h-100 shadow-sm border-success-subtle" style="background: #fcfffc; border-width: 1.5px;">
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-success px-2 py-1">Bed @bed.BedNumber</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle small">Vacant</span>
+                                    </div>
+
+                                    <div class="text-center py-3">
+                                        <span style="font-size: 2.2rem; display: block;" class="mb-1">🛏️</span>
+                                        <span class="text-success fw-bold small text-uppercase">Ready for Admission</span>
+                                        <div class="text-muted small">@bed.BedType Wing</div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-2 border-top mt-2">
+                                    <button type="button" class="btn btn-outline-success btn-sm w-100 fw-semibold"
+                                            data-bs-toggle="modal" data-bs-target="#admitModal-@bed.BedId">
+                                        + Admit Patient Here
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admission Modal for this Bed -->
+                        <div class="modal fade" id="admitModal-@bed.BedId" tabindex="-1" aria-labelledby="admitModalLabel-@bed.BedId" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <form asp-action="AdmitPatient" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="bedId" value="@bed.BedId" />
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="admitModalLabel-@bed.BedId">
+                                                Inpatient Admission: Bed @bed.BedNumber
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="alert alert-light border py-2 small mb-3">
+                                                <strong>Location:</strong> @bed.WardName (@bed.Floor) | <strong>Type:</strong> @bed.BedType
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Select Inpatient *</label>
+                                                <select name="patientId" class="form-select" required>
+                                                    <option value="">-- Choose Registered Patient --</option>
+                                                    @foreach (var patient in Model.Patients)
+                                                    {
+                                                        <option value="@patient.PatientId">
+                                                            @patient.FullName (@patient.MedicalRecordNumber) - @patient.PhoneNumber
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Attending Physician *</label>
+                                                <select name="doctorId" class="form-select" required>
+                                                    <option value="">-- Choose Attending Doctor --</option>
+                                                    @foreach (var doc in Model.Doctors)
+                                                    {
+                                                        <option value="@doc.DoctorId">
+                                                            @doc.FullName (@doc.Specialty)
+                                                        </option>
+                                                    }
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-semibold">Clinical Admission Diagnosis / Notes</label>
+                                                <textarea name="admissionNotes" class="form-control" rows="3" placeholder="e.g. Post-op surgical observation, IV medication protocol, oxygen therapy..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Window</button>
+                                            <button type="submit" class="btn btn-success btn-sm fw-semibold">Confirm Inpatient Admission</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Inpatient Stay & Admission History (Permanent Audit Log) -->
+<div class="schedule-panel mt-5" id="history">
+    <div class="section-heading mb-3 pb-2 border-bottom">
+        <div>
+            <p class="eyebrow mb-1">MEDICO-LEGAL ARCHIVE & CENSUS LOG</p>
+            <h2 class="fs-4 fw-bold mb-0">Inpatient Admission & Discharge History (@Model.AdmissionHistory.Count)</h2>
+        </div>
+        <span class="schedule-date">Permanent Records & Stay Logs</span>
+    </div>
+
+    @if (Model.AdmissionHistory.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0" style="font-size: 0.88rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Bed & Ward</th>
+                        <th>Inpatient</th>
+                        <th>Attending Doctor</th>
+                        <th>Admission Date</th>
+                        <th>Discharge Date</th>
+                        <th>Length of Stay</th>
+                        <th>Status</th>
+                        <th>Discharge Summary / Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var record in Model.AdmissionHistory)
+                    {
+                        <tr>
+                            <td>
+                                <strong>Bed @record.BedNumber</strong>
+                                <div class="text-muted small">@record.WardName</div>
+                            </td>
+                            <td>
+                                <strong class="d-block text-dark">@record.PatientName</strong>
+                                <span class="font-monospace small text-muted">@record.PatientMRN</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@record.DoctorName</div>
+                                <div class="text-muted small">@record.DoctorSpecialty</div>
+                            </td>
+                            <td>
+                                <div>@record.AdmittedAt.ToString("dd MMM yyyy")</div>
+                                <div class="text-muted small">@record.AdmittedAt.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                @if (record.DischargedAt.HasValue)
+                                {
+                                    <div>@record.DischargedAt.Value.ToString("dd MMM yyyy")</div>
+                                    <div class="text-muted small">@record.DischargedAt.Value.ToString("HH:mm")</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">Currently Admitted</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border font-monospace">@record.LengthOfStay</span>
+                            </td>
+                            <td>
+                                @if (record.Status == "Active")
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Active Stay</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Discharged</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="small text-muted" style="max-width: 280px; line-height: 1.3;">
+                                    @(string.IsNullOrWhiteSpace(record.DischargeSummary) ? record.AdmissionNotes : record.DischargeSummary)
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(record.DischargedByStaff))
+                                {
+                                    <div class="text-muted small fst-italic mt-1">By: @record.DischargedByStaff</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state p-4 text-center text-muted">No inpatient admission logs recorded yet.</div>
+    }
+</div>

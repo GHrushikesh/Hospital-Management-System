@@ -1,40 +1,693 @@
 @model HospitalManagementSystem.Models.DoctorDashboardViewModel
 @{
-    ViewData["Title"] = "Doctor Workspace";
+    ViewData["Title"] = "Doctor Clinical Cockpit - " + Model.FullName;
 }
 
 <section class="dashboard-intro mb-4">
     <div>
-        <p class="eyebrow mb-2">DOCTOR WORKSPACE</p>
-        <h1 class="display-title">Welcome, Dr. @Model.FullName</h1>
-        <p class="intro-copy">@Model.Specialty · @Model.Username</p>
+        <p class="eyebrow mb-1">CLINICAL WORKSPACE</p>
+        <h1 class="display-title">@Model.FullName</h1>
+        <p class="intro-copy">
+            <span class="badge text-bg-secondary me-2">@Model.Specialty</span>
+            <span class="badge text-bg-light border me-2">@Model.Qualification</span>
+            <span class="badge text-bg-dark">Room: @(string.IsNullOrWhiteSpace(Model.RoomNumber) ? "OPD" : Model.RoomNumber)</span>
+        </p>
     </div>
-    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary dashboard-action">View appointments <span aria-hidden="true">&rarr;</span></a>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <a asp-action="HireStaff" class="btn btn-primary btn-sm fw-semibold">+ Hire Staff Member</a>
+        <a asp-action="MyStaff" class="btn btn-outline-dark btn-sm fw-semibold">👥 My Staff Team (@Model.HiredStaffCount)</a>
+        <a asp-controller="Staff" asp-action="WardOccupancy" class="btn btn-outline-secondary btn-sm fw-semibold">🛏️ Beds Census</a>
+        <span class="badge @(Model.PendingRequests.Any() ? "bg-danger" : "bg-secondary") p-2" style="font-size: 0.85rem;">
+            @(Model.PendingRequests.Count) Pending Approvals
+        </span>
+    </div>
 </section>
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <div class="card metric-card metric-appointments">
-            <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
-                <p class="mt-3 mb-0">Review today's appointment schedule.</p>
+<!-- Active Emergencies Banner (if any) -->
+@if (Model.EmergencyAlerts.Any())
+{
+    <div class="alert alert-danger border-2 shadow-sm mb-4" role="alert" style="background: #fff3f3; border-color: #dc3545 !important;">
+        <div class="d-flex align-items-start justify-content-between gap-3">
+            <div class="d-flex align-items-start gap-3">
+                <span style="font-size: 2.2rem; line-height: 1;">🚨</span>
+                <div>
+                    <h5 class="alert-heading text-danger fw-bold mb-1">
+                        Critical Emergency Requiring Immediate Doctor Attention (@Model.EmergencyAlerts.Count)
+                    </h5>
+                    @foreach (var em in Model.EmergencyAlerts)
+                    {
+                        <div class="p-2 mb-2 bg-white rounded border border-danger">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-danger">Patient: @em.PatientName | Phone: @em.PatientPhoneNumber</strong>
+                                <span class="badge bg-danger">Critical</span>
+                            </div>
+                            <p class="mb-1 text-dark small"><strong>Symptom / Emergency Description:</strong> @em.EmergencyDescription</p>
+                            <div class="d-flex gap-2 mt-2">
+                                <form asp-action="AcknowledgeEmergency" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@em.AppointmentId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Accept & Prepare Emergency Room
+                                    </button>
+                                </form>
+                                <form asp-action="Reject" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@em.AppointmentId" />
+                                    <input type="hidden" name="reason" value="Redirected to General Trauma Unit" />
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                        Reroute to ER Triage
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card metric-card metric-doctors">
-            <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
-                <p class="mt-3 mb-0">Update appointment status and care notes.</p>
-            </div>
+}
+
+<!-- Section 1: Pending Patient Approval Queue -->
+<div class="schedule-panel mb-5" id="pending">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">INCOMING APPOINTMENT REQUESTS</p>
+            <h2>Pending Patient Approvals (@Model.PendingRequests.Count)</h2>
         </div>
+        <span class="schedule-date">Review medical complaints and approve consultation slots</span>
     </div>
-    <div class="col-md-4">
-        <div class="card metric-card metric-patients">
-            <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Clinical task</div>
-                <p class="mt-3 mb-0">Coordinate follow-up care with staff.</p>
+
+    @if (Model.PendingRequests.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Mobile</th>
+                        <th>Requested Date & Time</th>
+                        <th>Medical Complaint</th>
+                        <th>Type</th>
+                        <th class="text-end">Physician Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appt in Model.PendingRequests)
+                    {
+                        <tr class="@(appt.IsEmergency ? "table-danger" : "")">
+                            <td>
+                                <strong class="d-block">@appt.PatientName</strong>
+                                <span class="text-muted small">@appt.PatientMRN</span>
+                            </td>
+                            <td>@appt.PatientPhoneNumber</td>
+                            <td>
+                                <div class="fw-semibold">@appt.AppointmentDateTime.ToString("dd MMM yyyy")</div>
+                                <div class="text-muted small">@appt.AppointmentDateTime.ToString("hh:mm tt")</div>
+                            </td>
+                            <td>
+                                <div>@appt.Reason</div>
+                                @if (appt.IsEmergency)
+                                {
+                                    <div class="text-danger small mt-1">
+                                        <strong>Emergency Reason:</strong> @appt.EmergencyDescription
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (appt.IsEmergency)
+                                {
+                                    <span class="badge bg-danger">Critical Emergency</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Routine Consultation</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-success btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#approveModal-@appt.AppointmentId">
+                                        Approve Visit
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal-@appt.AppointmentId">
+                                        Decline
+                                    </button>
+                                </div>
+
+                                <!-- Approve Modal -->
+                                <div class="modal fade text-start" id="approveModal-@appt.AppointmentId" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form asp-action="Approve" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@appt.AppointmentId" />
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Approve Appointment: @appt.PatientName</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="small text-muted">
+                                                        Confirming will add this patient to your official consultation roster for
+                                                        <strong>@appt.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</strong>.
+                                                    </p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-bold">Physician Preparation Notes / Instructions (Optional)</label>
+                                                        <textarea name="notes" class="form-control" rows="3" placeholder="e.g. Please bring prior ECG and blood fasting reports..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-success btn-sm fw-semibold">Confirm Approval</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reject Modal -->
+                                <div class="modal fade text-start" id="rejectModal-@appt.AppointmentId" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form asp-action="Reject" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@appt.AppointmentId" />
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title text-danger">Decline Appointment</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="small text-muted">
+                                                        Provide the medical reason for declining so the front desk can reschedule with an alternate physician.
+                                                    </p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-bold">Reason for Rejection *</label>
+                                                        <select name="reason" class="form-select mb-2" required>
+                                                            <option value="Schedule fully booked; consult emergency duty desk.">Schedule fully booked</option>
+                                                            <option value="Case outside sub-specialty scope; refer to General Medicine.">Case outside sub-specialty</option>
+                                                            <option value="Physician undergoing emergency surgery rotation.">Surgery / Emergency rotation</option>
+                                                            <option value="Patient advised to visit trauma emergency room immediately.">Advised to visit ER</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger btn-sm">Decline Slot</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No pending appointment approvals at this time. All consultation requests are current.</div>
+    }
+</div>
+
+<!-- Section 2: Today's Consultation Schedule & Prescriptions -->
+<div class="schedule-panel mb-5" id="today">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">TODAY'S CLINICAL SCHEDULE</p>
+            <h2>Consultations for Today (@Model.TodayAppointments.Count)</h2>
+        </div>
+        <span class="schedule-date">@DateTime.Today.ToString("dddd, dd MMMM yyyy")</span>
+    </div>
+
+    @if (Model.TodayAppointments.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Time & Token</th>
+                        <th>Patient</th>
+                        <th>Triage Vitals</th>
+                        <th>Chief Complaint</th>
+                        <th>Status</th>
+                        <th class="text-end">Clinical Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appt in Model.TodayAppointments)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold fs-6">@appt.AppointmentDateTime.ToString("hh:mm tt")</div>
+                                @if (appt.TokenNumber.HasValue)
+                                {
+                                    <span class="badge text-bg-primary">Token #@appt.TokenNumber</span>
+                                }
+                            </td>
+                            <td>
+                                <strong class="d-block" style="color: var(--cb-ink);">@appt.PatientName</strong>
+                                <span class="text-muted small">MRN: @appt.PatientMRN | Tel: @appt.PatientPhoneNumber</span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(appt.VitalsSummary))
+                                {
+                                    <span class="badge text-bg-light border text-dark font-monospace" style="font-size: 0.78rem;">
+                                        @appt.VitalsSummary
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Awaiting triage vitals</span>
+                                }
+                            </td>
+                            <td>
+                                <div>@appt.Reason</div>
+                                @if (appt.IsEmergency)
+                                {
+                                    <span class="badge bg-danger mt-1">Critical</span>
+                                }
+                            </td>
+                            <td>
+                                @if (appt.Status == "Checked-In")
+                                {
+                                    <span class="badge bg-success">Patient In Clinic</span>
+                                }
+                                else if (appt.Status == "Completed")
+                                {
+                                    <span class="badge bg-secondary">Completed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark">@appt.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (appt.Status != "Completed")
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#consultModal-@appt.AppointmentId">
+                                        Consult & Prescribe &rarr;
+                                    </button>
+
+                                    <!-- Consultation & Structured Prescription Modal -->
+                                    <div class="modal fade text-start" id="consultModal-@appt.AppointmentId" data-patient-id="@appt.PatientId" data-appt-id="@appt.AppointmentId" tabindex="-1">
+                                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                                            <div class="modal-content">
+                                                 <form asp-action="Complete" method="post" onsubmit="return prepareRxSubmission('@appt.AppointmentId')">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@appt.AppointmentId" />
+                                                    <input type="hidden" name="prescriptionItemsJson" id="rxJson-@appt.AppointmentId" value="" />
+                                                    <div class="modal-header bg-light">
+                                                        <div>
+                                                            <h5 class="modal-title mb-0 fw-bold">Clinical Consultation: @appt.PatientName</h5>
+                                                            <span class="text-muted small">MRN: @appt.PatientMRN &bull; Contact: @appt.PatientPhoneNumber</span>
+                                                        </div>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4">
+                                                        <!-- Clinical Overview -->
+                                                        <div class="mb-3 p-3 bg-light rounded border">
+                                                            <div class="row g-2">
+                                                                <div class="col-md-6">
+                                                                    <strong>Chief Complaint:</strong> @appt.Reason<br />
+                                                                    <strong>Scheduled Time:</strong> @appt.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <strong>Recorded Triage Vitals:</strong> @(string.IsNullOrWhiteSpace(appt.VitalsSummary) ? "Not recorded" : appt.VitalsSummary)<br />
+                                                                    <strong>Consultation Room:</strong> @(string.IsNullOrWhiteSpace(Model.RoomNumber) ? "OPD Room" : Model.RoomNumber)
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Previous Prescribed Medicine History Accordion / Panel -->
+                                                        <div class="mb-4">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <span class="fw-bold small text-uppercase" style="letter-spacing: 0.05em; color: var(--cb-slate);">
+                                                                    📋 Patient Medical History: Previous Prescribed Medicine Data
+                                                                </span>
+                                                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.78rem;" onclick="fetchPatientRx(@appt.PatientId, 'rx-container-@appt.AppointmentId')">
+                                                                    🔄 Refresh Medication History
+                                                                </button>
+                                                            </div>
+                                                            <div id="rx-container-@appt.AppointmentId" class="p-2 bg-white rounded border small" style="min-height: 50px;">
+                                                                <div class="text-muted text-center py-2">Loading previous prescription history...</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Diagnosis Notes -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Physician Diagnosis & Clinical Notes *</label>
+                                                            <textarea name="doctorNotes" class="form-control" rows="3" placeholder="Enter clinical observations, examination findings, medical diagnosis, and lifestyle/dietary advice..." required></textarea>
+                                                        </div>
+
+                                                        <!-- Multi-Medication Structured Prescription Input Grid -->
+                                                        <div class="card mb-2 border-primary-subtle" style="background: #fdfefe;">
+                                                            <div class="card-body p-3">
+                                                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                                    <div>
+                                                                        <span class="fw-bold text-primary small text-uppercase d-block">
+                                                                            💊 Issue Structured Multi-Medication Prescription (Rx)
+                                                                        </span>
+                                                                        <span class="text-muted small">Prescribe one or multiple drugs. Each will be recorded in the patient's permanent lifetime EHR.</span>
+                                                                    </div>
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" onclick="addRxRow('@appt.AppointmentId')">
+                                                                        + Add Another Medication
+                                                                    </button>
+                                                                </div>
+
+                                                                <div id="rxRowsContainer-@appt.AppointmentId" class="d-flex flex-column gap-2 mb-2">
+                                                                    <!-- Default Row 1 -->
+                                                                    <div class="rx-row p-2 bg-light rounded border">
+                                                                        <div class="row g-2 align-items-center">
+                                                                            <div class="col-md-4">
+                                                                                <label class="form-label small fw-semibold mb-1">Medicine Name & Strength</label>
+                                                                                <input type="text" class="form-control form-control-sm rx-name" placeholder="e.g. Atorvastatin 20mg or Amoxicillin 500mg" />
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label class="form-label small fw-semibold mb-1">Dosage Form</label>
+                                                                                <input type="text" class="form-control form-control-sm rx-dosage" placeholder="e.g. 1 Tablet / 10ml" />
+                                                                            </div>
+                                                                            <div class="col-md-3">
+                                                                                <label class="form-label small fw-semibold mb-1">Frequency</label>
+                                                                                <select class="form-select form-select-sm rx-freq">
+                                                                                    <option value="1-0-1 (Twice Daily After Meals)">1-0-1 (Twice Daily After Meals)</option>
+                                                                                    <option value="1-0-0 (Morning with Breakfast)">1-0-0 (Morning with Breakfast)</option>
+                                                                                    <option value="0-0-1 (Night Before Sleep)">0-0-1 (Night Before Sleep)</option>
+                                                                                    <option value="1-1-1 (Thrice Daily)">1-1-1 (Thrice Daily)</option>
+                                                                                    <option value="SOS / When Needed for Pain">SOS / When Needed for Pain</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="col-md-2">
+                                                                                <label class="form-label small fw-semibold mb-1">Duration</label>
+                                                                                <input type="text" class="form-control form-control-sm rx-duration" placeholder="e.g. 5 Days or 30 Days" />
+                                                                            </div>
+                                                                            <div class="col-md-1 text-end pt-3">
+                                                                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" disabled title="Default Row">&times;</button>
+                                                                            </div>
+                                                                            <div class="col-12 mt-1">
+                                                                                <input type="text" class="form-control form-control-sm rx-inst" placeholder="Specific instructions: e.g. Take with warm water, avoid dairy within 2 hours, monitor blood pressure weekly..." />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-success btn-sm fw-semibold px-4">
+                                                            Save & Complete Consultation
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-light border text-success fw-bold">✓ Consultation Recorded</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No scheduled consultations for today.</div>
+    }
+</div>
+
+<!-- REAL-TIME EMERGENCY POP-UP MODAL -->
+<div class="modal fade" id="realtimeEmergencyModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="emergencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-3 border-danger shadow-lg">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="emergencyModalLabel">
+                    <span style="font-size: 1.4rem;">🚨</span> CRITICAL EMERGENCY ALERT!
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning py-2 small mb-3">
+                    A patient has just requested a critical emergency appointment under your specialty. Review symptoms below to determine urgency.
+                </div>
+
+                <div class="mb-2">
+                    <span class="text-muted small">Patient Name:</span>
+                    <h5 class="fw-bold mb-0 text-dark" id="emModalPatientName">Patient</h5>
+                </div>
+                <div class="mb-3">
+                    <span class="text-muted small">Contact Mobile:</span>
+                    <strong class="text-dark d-block" id="emModalPatientPhone">Phone</strong>
+                </div>
+
+                <div class="card bg-light border-danger mb-3">
+                    <div class="card-body p-3">
+                        <span class="text-danger fw-bold small text-uppercase">Emergency Symptom Description:</span>
+                        <p class="mb-0 text-dark mt-1" id="emModalDescription" style="font-size: 0.95rem; font-weight: 500;">
+                            Description text...
+                        </p>
+                    </div>
+                </div>
+
+                <div class="text-muted small">
+                    Time Requested: <span id="emModalTime">Time</span>
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between">
+                <form asp-action="Reject" method="post" id="emRejectForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="emRejectId" value="" />
+                    <input type="hidden" name="reason" value="Redirected to Trauma Emergency Wing" />
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Reroute to ER</button>
+                </form>
+
+                <form asp-action="AcknowledgeEmergency" method="post" id="emAcceptForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="emAcceptId" value="" />
+                    <button type="submit" class="btn btn-danger fw-bold px-3">
+                        Accept & Prepare Room &rarr;
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        window.addRxRow = function (apptId) {
+            const container = document.getElementById('rxRowsContainer-' + apptId);
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = 'rx-row p-2 bg-light rounded border';
+            div.innerHTML = `
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold mb-1">Medicine Name & Strength</label>
+                        <input type="text" class="form-control form-control-sm rx-name" placeholder="e.g. Paracetamol 650mg or Pantoprazole 40mg" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold mb-1">Dosage Form</label>
+                        <input type="text" class="form-control form-control-sm rx-dosage" placeholder="e.g. 1 Tablet / 5ml" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold mb-1">Frequency</label>
+                        <select class="form-select form-select-sm rx-freq">
+                            <option value="1-0-1 (Twice Daily After Meals)">1-0-1 (Twice Daily After Meals)</option>
+                            <option value="1-0-0 (Morning with Breakfast)">1-0-0 (Morning with Breakfast)</option>
+                            <option value="0-0-1 (Night Before Sleep)">0-0-1 (Night Before Sleep)</option>
+                            <option value="1-1-1 (Thrice Daily)">1-1-1 (Thrice Daily)</option>
+                            <option value="SOS / When Needed for Pain">SOS / When Needed for Pain</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold mb-1">Duration</label>
+                        <input type="text" class="form-control form-control-sm rx-duration" placeholder="e.g. 3 Days or 10 Days" />
+                    </div>
+                    <div class="col-md-1 text-end pt-3">
+                        <button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" onclick="removeRxRow(this)">&times;</button>
+                    </div>
+                    <div class="col-12 mt-1">
+                        <input type="text" class="form-control form-control-sm rx-inst" placeholder="Specific instructions: e.g. Take after food, avoid dairy, monitor fever..." />
+                    </div>
+                </div>`;
+            container.appendChild(div);
+        };
+
+        window.removeRxRow = function (btn) {
+            const row = btn.closest('.rx-row');
+            if (row) row.remove();
+        };
+
+        window.prepareRxSubmission = function (apptId) {
+            const container = document.getElementById('rxRowsContainer-' + apptId);
+            const hiddenJson = document.getElementById('rxJson-' + apptId);
+            if (!container || !hiddenJson) return true;
+
+            const rows = container.querySelectorAll('.rx-row');
+            const items = [];
+
+            rows.forEach(row => {
+                const name = row.querySelector('.rx-name')?.value.trim();
+                const dosage = row.querySelector('.rx-dosage')?.value.trim();
+                const freq = row.querySelector('.rx-freq')?.value;
+                const duration = row.querySelector('.rx-duration')?.value.trim();
+                const inst = row.querySelector('.rx-inst')?.value.trim();
+
+                if (name) {
+                    items.push({
+                        medicineName: name,
+                        dosage: dosage || 'As directed',
+                        frequency: freq || '1-0-1',
+                        duration: duration || '5 Days',
+                        instructions: inst || 'Take after meals'
+                    });
+                }
+            });
+
+            hiddenJson.value = JSON.stringify(items);
+            return true;
+        };
+
+        window.fetchPatientRx = function (patientId, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '<div class="text-muted text-center py-2">Loading previous prescriptions...</div>';
+
+            fetch('@Url.Action("GetPatientPrescriptions", "DoctorAccount")?patientId=' + encodeURIComponent(patientId))
+                .then(res => {
+                    if (!res.ok) throw new Error('Status ' + res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        container.innerHTML = '<div class="text-muted small py-2 text-center">No prior medication prescriptions recorded for this patient.</div>';
+                        return;
+                    }
+
+                    let html = '<div class="table-responsive"><table class="table table-sm table-striped align-middle mb-0" style="font-size: 0.8rem;">';
+                    html += '<thead class="table-light"><tr><th>Medicine Name</th><th>Dosage & Frequency</th><th>Duration</th><th>Instructions</th><th>Prescribed By</th><th>Date</th></tr></thead><tbody>';
+
+                    data.forEach(item => {
+                        html += `<tr>
+                            <td><strong class="text-primary">${escapeHtml(item.medicineName)}</strong></td>
+                            <td><span class="badge bg-light text-dark border">${escapeHtml(item.dosage)}</span> <span class="badge bg-secondary font-monospace">${escapeHtml(item.frequency)}</span></td>
+                            <td>${escapeHtml(item.duration)}</td>
+                            <td><small class="text-muted">${escapeHtml(item.instructions)}</small></td>
+                            <td>${escapeHtml(item.doctorName)} <span class="text-muted">(${escapeHtml(item.specialty)})</span></td>
+                            <td><small class="text-muted">${escapeHtml(item.prescribedAt)}</small></td>
+                        </tr>`;
+                    });
+
+                    html += '</tbody></table></div>';
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error('Failed to load prescriptions:', err);
+                    container.innerHTML = '<div class="text-danger small py-2 text-center">Could not load prescription records.</div>';
+                });
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup consultation modals to auto-fetch prescription history on show
+            document.querySelectorAll('[id^="consultModal-"]').forEach(modalEl => {
+                modalEl.addEventListener('show.bs.modal', function () {
+                    const patientId = this.getAttribute('data-patient-id');
+                    const apptId = this.getAttribute('data-appt-id');
+                    if (patientId && apptId) {
+                        fetchPatientRx(patientId, 'rx-container-' + apptId);
+                    }
+                });
+            });
+
+            // Setup real-time emergency alert pop-up
+            let activeEmergencyIds = new Set();
+            const emergencyModalEl = document.getElementById('realtimeEmergencyModal');
+            let emergencyModal = null;
+            if (emergencyModalEl) {
+                emergencyModal = new bootstrap.Modal(emergencyModalEl);
+            }
+
+            // Web Audio API beep synthesizer for emergency alarm chime
+            function playEmergencyChime() {
+                try {
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    const now = audioCtx.currentTime;
+
+                    // Beep 1
+                    const osc1 = audioCtx.createOscillator();
+                    const gain1 = audioCtx.createGain();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(880, now);
+                    gain1.gain.setValueAtTime(0.3, now);
+                    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc1.connect(gain1);
+                    gain1.connect(audioCtx.destination);
+                    osc1.start(now);
+                    osc1.stop(now + 0.3);
+
+                    // Beep 2
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(1174.66, now + 0.35);
+                    gain2.gain.setValueAtTime(0.3, now + 0.35);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.start(now + 0.35);
+                    osc2.stop(now + 0.7);
+                } catch (e) {
+                    console.log('Audio autoplay prevented:', e);
+                }
+            }
+
+            // Real-time polling check every 5 seconds for incoming emergencies
+            function checkEmergencies() {
+                fetch('@Url.Action("GetEmergencyAlerts", "DoctorAccount")')
+                    .then(response => {
+                        if (!response.ok) return [];
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            const unhandled = data.find(item => !activeEmergencyIds.has(item.appointmentId));
+                            if (unhandled) {
+                                activeEmergencyIds.add(unhandled.appointmentId);
+                                document.getElementById('emModalPatientName').innerText = unhandled.patientName;
+                                document.getElementById('emModalPatientPhone').innerText = unhandled.phoneNumber;
+                                document.getElementById('emModalDescription').innerText = unhandled.emergencyDescription || unhandled.reason;
+                                document.getElementById('emModalTime').innerText = unhandled.time;
+                                document.getElementById('emAcceptId').value = unhandled.appointmentId;
+                                document.getElementById('emRejectId').value = unhandled.appointmentId;
+
+                                playEmergencyChime();
+                                if (emergencyModal) {
+                                    emergencyModal.show();
+                                }
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Emergency check error:', err));
+            }
+
+            // Start polling
+            setInterval(checkEmergencies, 5000);
+            checkEmergencies();
+        });
+    </script>
+}

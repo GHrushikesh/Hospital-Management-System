@@ -1,72 +1,123 @@
-@model HospitalManagementSystem.Models.DashboardViewModel
+@model HospitalManagementSystem.Models.PatientPortalViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "CareBridge Hospital - Compassionate Clinical Care";
 }
 
 <section class="dashboard-intro mb-4">
     <div>
-        <p class="eyebrow mb-2">OPERATIONS OVERVIEW</p>
-        <h1 class="display-title">Hospital operations</h1>
-        <p class="intro-copy">A current view of patients, clinicians, and scheduled care.</p>
+        <p class="eyebrow mb-2">CAREBRIDGE CLINICAL HEALTHCARE</p>
+        <h1 class="display-title">Compassionate care, verified medical excellence</h1>
+        <p class="intro-copy">Accredited medical center providing outpatient consultations, inpatient wards, and 24/7 emergency response.</p>
     </div>
-    <a asp-controller="Appointment" asp-action="GuestRequest" class="btn btn-primary dashboard-action">Book appointment <span aria-hidden="true">&rarr;</span></a>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Appointment" asp-action="GuestRequest" class="btn btn-primary dashboard-action">
+            Book consultation &rarr;
+        </a>
+        <a asp-controller="Appointment" asp-action="Emergency" class="btn btn-danger dashboard-action fw-bold shadow-sm" style="border-width: 1.5px;">
+            🚨 24/7 Emergency Dispatch
+        </a>
+    </div>
 </section>
 
-<div class="row g-3">
+<!-- Emergency / Quick Response Callout -->
+<div class="card mb-4" style="background: #fff8f8; border-color: #f5c2c7 !important;">
+    <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 py-3">
+        <div>
+            <span class="badge bg-danger text-white mb-1" style="font-size: 0.72rem; letter-spacing: 0.05em;">24/7 TRAUMA & CRITICAL CARE</span>
+            <h5 class="mb-1" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; color: #842029;">Life-threatening or urgent medical emergency?</h5>
+            <p class="mb-0 text-muted small">Our emergency trauma unit is staffed 24/7. Use our rapid triage dispatch to alert on-duty specialists immediately or call our trauma line.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-controller="Appointment" asp-action="Emergency" class="btn btn-danger btn-sm px-3 fw-bold text-nowrap">🚨 Dispatch Trauma Intake &rarr;</a>
+            <a href="tel:5550199110" class="btn btn-outline-danger btn-sm px-3 text-nowrap">Call +1 555 019 9110</a>
+            <a asp-controller="Appointment" asp-action="CheckStatus" class="btn btn-outline-secondary btn-sm px-3 text-nowrap">Check Booking Status</a>
+        </div>
+    </div>
+</div>
+
+<!-- Specialties Overview -->
+<div class="row g-3 mb-5">
     <div class="col-md-4">
-        <div class="card metric-card metric-patients">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Registered patients</div>
-                <p class="metric-value">@Model.PatientCount</p>
-                <a asp-controller="Patient" asp-action="Index" class="metric-link">View patient records &rarr;</a>
+                <div class="metric-label"><span class="metric-dot"></span>Clinical Departments</div>
+                <p class="metric-value">@Model.TotalSpecialtiesCount</p>
+                <span class="text-muted small">Cardiology, Neurology, Pediatrics, Orthopedics & more.</span>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card metric-card metric-doctors">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Medical specialists</div>
-                <p class="metric-value">@Model.DoctorCount</p>
-                <a asp-controller="Doctor" asp-action="Index" class="metric-link">Browse doctor directory &rarr;</a>
+                <div class="metric-label"><span class="metric-dot"></span>Accredited Clinicians</div>
+                <p class="metric-value">@Model.TotalDoctorsAvailable</p>
+                <span class="text-muted small">Certified physicians and surgical consultants on duty.</span>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card metric-card metric-appointments">
+        <div class="card metric-card">
             <div class="card-body">
-                <div class="metric-label"><span class="metric-dot"></span>Total appointments</div>
-                <p class="metric-value">@Model.AppointmentCount</p>
-                <a asp-controller="Appointment" asp-action="Index" class="metric-link">Open appointment desk &rarr;</a>
+                <div class="metric-label"><span class="metric-dot"></span>Emergency & Inpatient</div>
+                <p class="metric-value">24/7</p>
+                <span class="text-muted small">Equipped intensive care units (ICU) and recovery wards.</span>
             </div>
         </div>
     </div>
 </div>
 
-<div class="schedule-panel mt-5">
+<!-- Medical Specialists Directory with Qualifications & Room Numbers -->
+<div class="schedule-panel mt-4">
     <div class="section-heading">
-        <div><p class="eyebrow mb-1">LIVE SCHEDULE</p><h2>Today's appointments</h2></div>
-        <span class="schedule-date">@DateTime.Today.ToString("dddd, dd MMMM")</span>
+        <div>
+            <p class="eyebrow mb-1">CONSULTING SPECIALISTS</p>
+            <h2>Verified doctors & clinic rooms</h2>
+        </div>
+        <span class="schedule-date">Select a specialist and view qualifications before booking</span>
     </div>
-    @if (Model.TodayAppointments.Any())
+
+    @if (Model.FeaturedDoctors.Any())
     {
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Patient</th>
-                        <th>Doctor</th>
-                        <th>Time</th>
-                        <th>Status</th>
+                        <th>Specialist</th>
+                        <th>Department</th>
+                        <th>Medical Qualifications</th>
+                        <th>Consultation Room</th>
+                        <th>Availability</th>
+                        <th>Fee</th>
+                        <th class="text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var appointment in Model.TodayAppointments)
+                    @foreach (var doctor in Model.FeaturedDoctors)
                     {
                         <tr>
-                            <td>@appointment.PatientName</td>
-                            <td>@appointment.DoctorName</td>
-                            <td>@appointment.AppointmentDateTime.ToString("g")</td>
-                            <td>@appointment.Status</td>
+                            <td>
+                                <strong style="color: var(--cb-ink);">@doctor.FullName</strong>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: #eef2f6; color: #2b3a4a; font-weight: 600;">@doctor.Specialty</span>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-light border" style="font-size: 0.78rem;">@doctor.Qualification</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">@(string.IsNullOrWhiteSpace(doctor.RoomNumber) ? "OPD Desk" : doctor.RoomNumber)</span>
+                            </td>
+                            <td class="text-muted small">
+                                @(string.IsNullOrWhiteSpace(doctor.Availability) ? "Mon - Fri" : doctor.Availability)
+                            </td>
+                            <td>
+                                <span class="fw-bold">@doctor.ConsultationFee.ToString("C")</span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-controller="Appointment" asp-action="GuestRequest" class="btn btn-outline-primary btn-sm">
+                                    Book visit
+                                </a>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -75,6 +126,6 @@
     }
     else
     {
-        <div class="empty-state">Your schedule is clear for today.</div>
+        <div class="empty-state">No consulting doctors are currently listed. Please contact the front desk.</div>
     }
 </div>

@@ -1,29 +1,409 @@
 @model HospitalManagementSystem.Models.StaffDashboardViewModel
 @{
-    ViewData["Title"] = "Staff Workspace";
+    ViewData["Title"] = "Ward & Nursing Care Station - " + Model.FullName;
 }
 
 <section class="dashboard-intro mb-4">
     <div>
-        <p class="eyebrow mb-2">STAFF WORKSPACE</p>
-        <h1 class="display-title">Welcome, @Model.FullName</h1>
-        <p class="intro-copy">@Model.Role · @Model.Department</p>
+        <p class="eyebrow mb-1">INPATIENT CARE & CLINICAL NURSING STATION</p>
+        <h1 class="display-title">@Model.FullName</h1>
+        <p class="intro-copy">
+            <span class="badge text-bg-secondary me-2">@Model.Role &bull; @Model.Department</span>
+            <span class="badge text-bg-light border me-2">@Model.Qualification</span>
+            @if (!string.IsNullOrWhiteSpace(Model.HiredByDoctorName))
+            {
+                <span class="badge text-bg-dark">Supervised by @Model.HiredByDoctorName</span>
+            }
+        </p>
     </div>
-    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary dashboard-action">Open appointments <span aria-hidden="true">&rarr;</span></a>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <a asp-action="WardOccupancy" class="btn btn-outline-primary btn-sm fw-semibold">
+            🛏️ Manage Beds & Admissions
+        </a>
+        <a asp-action="EmergencyQueue" class="btn btn-outline-danger btn-sm fw-semibold">
+            🚨 Central ER Cockpit
+        </a>
+        <a asp-controller="Patient" asp-action="Create" class="btn btn-primary btn-sm fw-semibold">
+            + Register Arriving Patient
+        </a>
+    </div>
 </section>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h2 class="h4">Your responsibilities</h2>
-        <p class="text-muted">Complete these tasks during your shift.</p>
-        <div class="list-group list-group-flush">
+<!-- Clinical Scope & Governance Notice -->
+<div class="alert border-0 shadow-sm p-3 mb-4 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-2" 
+     style="background: #eef8f6; border-left: 4px solid #0d9488 !important;">
+    <div class="d-flex align-items-center gap-3">
+        <span style="font-size: 1.5rem;">🩺</span>
+        <div class="small text-dark">
+            <strong>Clinical Scope of Practice:</strong> Nursing and ward staff manage physical triage, vitals recording, inpatient bed admissions, and medication dispensing. Diagnostic decisions, prescription writing, and appointment scheduling remain under exclusive physician authority.
+        </div>
+    </div>
+    <span class="badge bg-teal text-white py-1 px-2" style="background-color: #0d9488; font-size: 0.75rem;">NURSING DESK</span>
+</div>
+
+<!-- Staff Assigned Room / Ward & Shift Roster Card -->
+<div class="card mb-4" style="background: #fff; border-top: 3px solid #0d9488 !important; border-radius: 10px;">
+    <div class="card-body p-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Assigned Station / Ward</span>
+                <h4 class="mb-0 fw-bold mt-1" style="color: var(--cb-ink);">
+                    @(string.IsNullOrWhiteSpace(Model.AssignedRoomOrWard) ? "Central Inpatient Ward" : Model.AssignedRoomOrWard)
+                </h4>
+                <span class="text-muted small">Designated physical care station</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Duty Shift Timing</span>
+                <h4 class="mb-0 fw-bold mt-1" style="color: #0d9488;">
+                    @(string.IsNullOrWhiteSpace(Model.ShiftTiming) ? "General Duty Shift" : Model.ShiftTiming)
+                </h4>
+                <span class="text-muted small">Active duty roster hours</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Supervising Physician</span>
+                <div class="fw-semibold mt-1 text-dark">
+                    @(string.IsNullOrWhiteSpace(Model.HiredByDoctorName) ? "Chief Medical Officer" : Model.HiredByDoctorName)
+                </div>
+                <span class="text-muted small">Department: @Model.Department</span>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.05em;">Nursing Credential</span>
+                <div class="fw-semibold mt-1">@Model.Qualification</div>
+                <span class="text-muted small">License / Certification Verified</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 1: Inpatient Ward Bed Census & Active Inpatient Overview -->
+<div class="card mb-4 shadow-sm border-0" style="border-radius: 10px; overflow: hidden;">
+    <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 1.4rem;">🛏️</span>
+            <div>
+                <h5 class="mb-0 fw-bold text-dark" style="font-family: 'Space Grotesk', sans-serif;">Inpatient Ward Census & Bed Status</h5>
+                <span class="text-muted small">Real-time bed occupancy monitoring across intensive care, surgical, and general recovery wings</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold px-2 py-1">
+                @Model.OccupiedBeds Occupied Beds
+            </span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold px-2 py-1">
+                @Model.VacantBeds Vacant Ready
+            </span>
+            <a asp-action="WardOccupancy" class="btn btn-outline-primary btn-sm ms-2">
+                Open Ward Admissions &rarr;
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.OccupiedBedsList.Any())
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 table-hover">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>Bed Number</th>
+                            <th>Ward / Floor</th>
+                            <th>Admitted Patient</th>
+                            <th>Attending Physician</th>
+                            <th>Clinical Admission Notes</th>
+                            <th>Admitted Duration</th>
+                            <th class="text-end">Nursing Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bed in Model.OccupiedBedsList)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge bg-danger text-white font-monospace px-2 py-1" style="font-size: 0.85rem;">
+                                        @bed.BedNumber
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@bed.WardName</div>
+                                    <span class="text-muted small">@bed.Floor &bull; @bed.BedType</span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@(string.IsNullOrWhiteSpace(bed.PatientName) ? "Inpatient" : bed.PatientName)</div>
+                                    <span class="text-muted small">MRN: @(string.IsNullOrWhiteSpace(bed.PatientMRN) ? $"#PAT-{bed.PatientId}" : bed.PatientMRN)</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">Dr. @(string.IsNullOrWhiteSpace(bed.DoctorName) ? "On-Duty Consultant" : bed.DoctorName)</div>
+                                    <span class="badge text-bg-light border small">@bed.DoctorSpecialty</span>
+                                </td>
+                                <td>
+                                    <span class="text-dark small">@(string.IsNullOrWhiteSpace(bed.AdmissionNotes) ? "Routine observation" : bed.AdmissionNotes)</span>
+                                </td>
+                                <td>
+                                    @if (bed.AdmittedAt.HasValue)
+                                    {
+                                        var span = DateTime.Now - bed.AdmittedAt.Value;
+                                        <span class="text-muted small">@((int)span.TotalHours) hrs ago</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Active</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="WardOccupancy" class="btn btn-outline-secondary btn-sm">
+                                        View Chart
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-4 text-center text-muted small">
+                All inpatient beds are currently vacant and sanitized.
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Section 2: Patient Intake & Triage Vitals Station (Today's Arriving Patients) -->
+<div class="schedule-panel mb-5" id="queue">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow mb-1">PRE-CONSULTATION NURSING TRIAGE</p>
+            <h2>Today's Patient Arrival & Vitals Queue</h2>
+        </div>
+        <span class="schedule-date">Measure objective vitals (BP, Pulse, Temp, SpO2, RR) and flag check-in for doctors</span>
+    </div>
+
+    @if (Model.TodayAppointments.Any())
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Patient</th>
+                        <th>Consulting Specialist & Room</th>
+                        <th>Clinical Baseline Vitals</th>
+                        <th>Arrival Status</th>
+                        <th class="text-end">Triage Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appt in Model.TodayAppointments)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@appt.AppointmentDateTime.ToString("hh:mm tt")</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@appt.PatientName</div>
+                                <span class="text-muted small">MRN: @appt.PatientMRN | Tel: @appt.PatientPhoneNumber</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">Dr. @appt.DoctorName</div>
+                                <span class="badge text-bg-light border small">Room: @(string.IsNullOrWhiteSpace(appt.DoctorRoomNumber) ? "OPD" : appt.DoctorRoomNumber)</span>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(appt.VitalsSummary))
+                                {
+                                    <span class="badge text-bg-light border text-dark font-monospace" style="font-size: 0.76rem;">@appt.VitalsSummary</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small fst-italic">Awaiting nurse measurement</span>
+                                }
+                            </td>
+                            <td>
+                                @if (appt.Status == "Checked-In")
+                                {
+                                    <span class="badge bg-info text-dark">Checked In & In Waiting Room</span>
+                                }
+                                else if (appt.Status == "Completed")
+                                {
+                                    <span class="badge bg-secondary">Completed</span>
+                                }
+                                else if (appt.Status.Contains("Emergency"))
+                                {
+                                    <span class="badge bg-danger">🚨 Critical Trauma Bay</span>
+                                }
+                                else if (appt.Status == "Approved")
+                                {
+                                    <span class="badge bg-success">Doctor Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@appt.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (appt.Status != "Completed" && appt.Status != "Checked-In")
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#checkInModal-@appt.AppointmentId">
+                                        🩺 Measure & Record Vitals
+                                    </button>
+
+                                    <!-- Vitals Triage Modal -->
+                                    <div class="modal fade text-start" id="checkInModal-@appt.AppointmentId" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <form asp-action="CheckInWithVitals" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="appointmentId" value="@appt.AppointmentId" />
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Record Vitals: @appt.PatientName</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-light border small mb-3">
+                                                            <strong>Attending Doctor:</strong> Dr. @appt.DoctorName (Room: @appt.DoctorRoomNumber)<br />
+                                                            <strong>Reported Complaint:</strong> @appt.Reason
+                                                        </div>
+
+                                                        <div class="row g-3">
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-semibold">Blood Pressure (mmHg) *</label>
+                                                                <input type="text" name="bp" class="form-control" placeholder="e.g. 120/80" required />
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-semibold">Pulse Rate (bpm) *</label>
+                                                                <input type="text" name="pulse" class="form-control" placeholder="e.g. 74" required />
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-semibold">Body Temperature (°F) *</label>
+                                                                <input type="text" name="temp" class="form-control" placeholder="e.g. 98.6" required />
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small fw-semibold">SpO2 Oxygen Saturation (%)</label>
+                                                                <input type="text" name="spo2" class="form-control" placeholder="e.g. 98" />
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label class="form-label small fw-semibold">Respiratory Rate (breaths/min, optional)</label>
+                                                                <input type="text" name="respRate" class="form-control" placeholder="e.g. 16" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close Window</button>
+                                                        <button type="submit" class="btn btn-success btn-sm">Confirm Vitals & Check In</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (appt.Status == "Checked-In")
+                                {
+                                    <span class="text-success small fw-semibold">✓ Vitals Charted</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No scheduled consultations assigned to the triage station today.</div>
+    }
+</div>
+
+<!-- Section 3: Medication Administration Record (MAR - Nurse View) -->
+<div class="card mb-4 shadow-sm border-0" style="border-radius: 10px; overflow: hidden;">
+    <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="badge bg-secondary-subtle text-secondary fw-bold text-uppercase px-2 py-1 mb-1" style="font-size: 0.7rem; letter-spacing: 0.06em;">
+                PHARMACY & NURSING DISPENSING
+            </span>
+            <h5 class="mb-0 fw-bold text-dark" style="font-family: 'Space Grotesk', sans-serif;">
+                Medication Administration Record (MAR)
+            </h5>
+            <span class="text-muted small">Active physician-prescribed orders for inpatient bedside administration and patient guidance</span>
+        </div>
+        <div class="text-end text-muted small d-none d-sm-block">
+            <span>🛡️ Verify Five Rights: Patient, Drug, Dose, Route, Time</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.ActivePrescriptionOrders.Any())
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0 table-hover">
+                    <thead class="table-light small text-uppercase">
+                        <tr>
+                            <th>Patient</th>
+                            <th>Medication Name</th>
+                            <th>Dosage & Frequency</th>
+                            <th>Duration</th>
+                            <th>Prescribing Physician</th>
+                            <th>Administration Instructions</th>
+                            <th>Prescribed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rx in Model.ActivePrescriptionOrders)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">@rx.PatientName</div>
+                                    <span class="text-muted small">MRN: @rx.PatientMRN</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-primary" style="font-family: 'Space Grotesk', sans-serif;">
+                                        💊 @rx.MedicineName
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge text-bg-light border text-dark fw-bold">@rx.Dosage</span>
+                                    <span class="badge text-bg-secondary">@rx.Frequency</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">@rx.Duration</span>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">Dr. @rx.DoctorName</div>
+                                    <span class="text-muted small">@rx.DoctorSpecialty</span>
+                                </td>
+                                <td>
+                                    <span class="text-dark small">@(string.IsNullOrWhiteSpace(rx.Instructions) ? "As directed by physician" : rx.Instructions)</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">@rx.PrescribedAt.ToString("MMM dd, hh:mm tt")</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-4 text-center text-muted small">
+                No active medication orders found in the hospital pharmacy stream.
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Section 4: Daily Shift Protocol Checklist -->
+<div class="card bg-light border mb-4">
+    <div class="card-body p-3">
+        <span class="fw-bold small text-uppercase" style="letter-spacing: 0.05em; color: var(--cb-muted);">
+            📋 Nursing Handover & Shift Protocol Checklist
+        </span>
+        <ul class="mb-0 mt-2 small text-dark ps-3">
             @foreach (var task in Model.Tasks)
             {
-                <div class="list-group-item px-0 d-flex gap-3 align-items-center">
-                    <span class="badge rounded-pill text-bg-primary">Task</span>
-                    <span>@task</span>
-                </div>
+                <li class="mb-1">@task</li>
             }
-        </div>
+        </ul>
     </div>
 </div>

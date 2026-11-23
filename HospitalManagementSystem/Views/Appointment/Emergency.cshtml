@@ -1,0 +1,280 @@
+@model HospitalManagementSystem.Models.EmergencyRequestViewModel
+@{
+    ViewData["Title"] = "🚨 24/7 Acute Emergency & Trauma Dispatch";
+    var doctors = ViewBag.Doctors as IEnumerable<HospitalManagementSystem.Models.Doctor> ?? Enumerable.Empty<HospitalManagementSystem.Models.Doctor>();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Emergency Hotline Banner -->
+        <div class="alert text-white d-flex flex-column flex-md-row align-items-md-center justify-content-between p-3 mb-4 rounded-3 shadow-sm" 
+             style="background: linear-gradient(135deg, #b02a37 0%, #dc3545 100%); border: none;">
+            <div class="d-flex align-items-center gap-3">
+                <span style="font-size: 2.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" class="pulse-beacon">🚨</span>
+                <div>
+                    <h5 class="mb-0 fw-bold text-white" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.02em;">
+                        CAREBRIDGE CODE-RED EMERGENCY INTAKE
+                    </h5>
+                    <p class="mb-0 small text-white-50">
+                        For immediate resuscitation or life threats, dial our Trauma Hotline immediately or dispatch this intake pass.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
+                <a href="tel:5550199110" class="btn btn-light fw-bold text-danger px-3 py-2 shadow-sm text-nowrap">
+                    📞 Call Trauma Desk: +1 555 019 9110
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-danger border-2 mb-4" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-danger text-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-white text-danger fw-bold text-uppercase px-2 py-1 mb-1" style="font-size: 0.7rem; letter-spacing: 0.08em;">
+                        RAPID CLINICAL TRIAGE ENGINE
+                    </span>
+                    <h4 class="mb-0 fw-bold" style="font-family: 'Space Grotesk', sans-serif;">
+                        Emergency & Trauma Intake Dispatch
+                    </h4>
+                </div>
+                <div class="text-end text-white-50 small d-none d-sm-block">
+                    <span>⚡ Instant Notification to On-Duty ER Team</span><br />
+                    <span>No wait, bypasses regular OPD queues</span>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="alert alert-warning border-0 small mb-4 py-2 px-3 d-flex align-items-center gap-2" style="background: #fff8e1; color: #856404;">
+                    <span style="font-size: 1.2rem;">⚠️</span>
+                    <div>
+                        <strong>Notice:</strong> This portal is strictly reserved for acute medical distress, sudden trauma, and urgent conditions requiring immediate ER care. For routine consultations, please use the <a asp-action="GuestRequest" class="fw-bold text-decoration-underline" style="color: #856404;">OPD Consultation Booking</a>.
+                    </div>
+                </div>
+
+                <form asp-action="Emergency" method="post" id="emergencyIntakeForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-4"></div>
+
+                    <!-- 1. ACUTE EMERGENCY CATEGORY -->
+                    <div class="mb-4">
+                        <label asp-for="EmergencyCategory" class="form-label fw-bold text-danger text-uppercase mb-2" style="font-size: 0.85rem; letter-spacing: 0.06em;">
+                            1. Select Acute Condition / Trauma Category <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Cardiac Distress / Acute Chest Pain" class="form-check-input me-2" checked />
+                                    <strong class="d-block text-dark">💔 Cardiac Distress</strong>
+                                    <span class="text-muted small">Severe chest pain, heart attack symptoms, left arm/jaw numbness.</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Acute Stroke / Neurological Deficit" class="form-check-input me-2" />
+                                    <strong class="d-block text-dark">🧠 Stroke / Neuro</strong>
+                                    <span class="text-muted small">Facial droop, slurred speech, sudden paralysis, active seizures.</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Severe Trauma / Hemorrhage / Accident" class="form-check-input me-2" />
+                                    <strong class="d-block text-dark">🩸 Severe Trauma / Crash</strong>
+                                    <span class="text-muted small">Road accident, uncontrolled arterial bleeding, open fractures.</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Severe Respiratory Distress / Choking" class="form-check-input me-2" />
+                                    <strong class="d-block text-dark">🫁 Respiratory Failure</strong>
+                                    <span class="text-muted small">Inability to breathe, foreign object choking, severe acute asthma.</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Pediatric Critical Emergency" class="form-check-input me-2" />
+                                    <strong class="d-block text-dark">👶 Pediatric Critical Care</strong>
+                                    <span class="text-muted small">Infant high fever convulsion, lethargy, severe pediatric distress.</span>
+                                </label>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label class="emergency-option-card d-block p-3 border rounded-3 h-100 cursor-pointer">
+                                    <input type="radio" asp-for="EmergencyCategory" value="Acute Poisoning / Severe Burn / Other Urgent" class="form-check-input me-2" />
+                                    <strong class="d-block text-dark">⚠️ Toxic Ingestion / Burns</strong>
+                                    <span class="text-muted small">Chemical burn, drug overdose, high-voltage shock, acute poisoning.</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="EmergencyCategory" class="text-danger small"></span>
+                    </div>
+
+                    <hr class="my-4" style="opacity: 0.15;" />
+
+                    <!-- 2. RAPID TRIAGE STATUS INDICATORS (ESI CALCULATION) -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark text-uppercase mb-2" style="font-size: 0.85rem; letter-spacing: 0.06em;">
+                            2. Patient Vitals & Rapid Triage Status <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="ConsciousnessLevel" class="form-label small fw-semibold">Consciousness Level</label>
+                                <select asp-for="ConsciousnessLevel" class="form-select border-danger">
+                                    <option value="Conscious & Alert">🟢 Conscious & Fully Alert</option>
+                                    <option value="Drowsy / Confused / Disoriented">🟡 Drowsy / Lethargic / Disoriented</option>
+                                    <option value="Unconscious / Unresponsive">🔴 Unconscious / Unresponsive (Critical ESI-1)</option>
+                                </select>
+                                <span asp-validation-for="ConsciousnessLevel" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="BreathingStatus" class="form-label small fw-semibold">Breathing Condition</label>
+                                <select asp-for="BreathingStatus" class="form-select border-danger">
+                                    <option value="Normal Breathing">🟢 Breathing Normally</option>
+                                    <option value="Severe Shortness of Breath / Wheezing">🟡 Severe Distress / Rapid Shallow</option>
+                                    <option value="Gasping / Agonal Breathing">🔴 Gasping / Agonal (Critical ESI-1)</option>
+                                    <option value="Stopped Breathing / CPR in Progress">🔴 No Pulse / Stopped / CPR Ongoing</option>
+                                </select>
+                                <span asp-validation-for="BreathingStatus" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="EstimatedArrival" class="form-label small fw-semibold">Estimated Arrival (ETA)</label>
+                                <select asp-for="EstimatedArrival" class="form-select border-danger">
+                                    <option value="Already at Emergency Gate">⚡ Already at Emergency Gate / Triage</option>
+                                    <option value="Ambulance En-Route (< 10 mins)">🚑 Ambulance En-Route (&lt; 10 mins)</option>
+                                    <option value="Private Vehicle (10 - 20 mins)">🚗 Private Vehicle (10 - 20 mins)</option>
+                                    <option value="ETA > 20 mins">🕒 Arriving in &gt; 20 mins</option>
+                                </select>
+                                <span asp-validation-for="EstimatedArrival" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="opacity: 0.15;" />
+
+                    <!-- 3. PATIENT IDENTITY & EMERGENCY CONTACT -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark text-uppercase mb-2" style="font-size: 0.85rem; letter-spacing: 0.06em;">
+                            3. Patient Identity & Emergency Contact <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="FirstName" class="form-label small fw-semibold">Patient First Name <span class="text-danger">*</span></label>
+                                <input asp-for="FirstName" class="form-control" placeholder="e.g. John" />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="LastName" class="form-label small fw-semibold">Patient Last Name <span class="text-danger">*</span></label>
+                                <input asp-for="LastName" class="form-control" placeholder="e.g. Doe" />
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Gender" class="form-label small fw-semibold">Gender <span class="text-danger">*</span></label>
+                                <select asp-for="Gender" class="form-select">
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                                <span asp-validation-for="Gender" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PhoneNumber" class="form-label small fw-semibold">Primary Contact / Patient Phone <span class="text-danger">*</span></label>
+                                <input asp-for="PhoneNumber" class="form-control" placeholder="e.g. 555-019-2831" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="CallerRelationship" class="form-label small fw-semibold">Reporting By</label>
+                                <select asp-for="CallerRelationship" class="form-select">
+                                    <option value="Patient">Patient Themselves</option>
+                                    <option value="Family Member / Spouse">Family / Relative</option>
+                                    <option value="Ambulance Paramedic">Paramedic / EMT</option>
+                                    <option value="Bystander / Good Samaritan">Bystander / Witness</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="CallerName" class="form-label small fw-semibold">Caller Name (Optional)</label>
+                                <input asp-for="CallerName" class="form-control" placeholder="If reported by bystander" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" style="opacity: 0.15;" />
+
+                    <!-- 4. ACUTE CLINICAL DESCRIPTION -->
+                    <div class="mb-4">
+                        <label asp-for="EmergencyDescription" class="form-label fw-bold text-danger text-uppercase mb-1" style="font-size: 0.85rem; letter-spacing: 0.06em;">
+                            4. Describe Critical Symptoms & Clinical Urgency <span class="text-danger">*</span>
+                        </label>
+                        <p class="text-muted small mb-2">
+                            This description is broadcast directly to on-duty specialists and trauma bay nurses before patient arrival.
+                        </p>
+                        <textarea asp-for="EmergencyDescription" class="form-control border-danger" rows="3" 
+                                  placeholder="E.g., Severe crushing retrosternal pain radiating to left shoulder for 30 minutes, cold sweats, history of hypertension. Arriving by private car in 5 mins."></textarea>
+                        <span asp-validation-for="EmergencyDescription" class="text-danger small"></span>
+                    </div>
+
+                    <!-- 5. OPTIONAL DIRECT SPECIALIST OVERRIDE -->
+                    <div class="mb-4">
+                        <label asp-for="PreferredDoctorId" class="form-label small fw-semibold text-muted">
+                            Attending Specialist Routing (Optional - system will auto-route to the on-duty department specialist):
+                        </label>
+                        <select asp-for="PreferredDoctorId" class="form-select form-select-sm" style="max-width: 450px;">
+                            <option value="">-- Auto-Route to On-Duty Specialist by Condition --</option>
+                            @foreach (var doc in doctors)
+                            {
+                                <option value="@doc.DoctorId">
+                                    Dr. @doc.FullName (@doc.Specialty) - Room: @(string.IsNullOrWhiteSpace(doc.RoomNumber) ? "ER Bay" : doc.RoomNumber)
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- SUBMIT BUTTON -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-danger btn-lg py-3 fw-bold shadow emergency-dispatch-btn" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; letter-spacing: 0.03em;">
+                            🚨 DISPATCH IMMEDIATE EMERGENCY TRAUMA ALERT
+                        </button>
+                        <div class="text-center text-muted small mt-2">
+                            🔒 High Priority Dispatch: Instantly alerts Emergency Room physicians, reserves triage queue priority, and prepares trauma reception.
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .emergency-option-card {
+        background: #fff;
+        border: 1.5px solid #e2e8f0;
+        transition: all 0.2s ease-in-out;
+    }
+    .emergency-option-card:hover {
+        border-color: #dc3545;
+        background: #fffafa;
+    }
+    .emergency-option-card input[type="radio"]:checked ~ strong {
+        color: #dc3545 !important;
+    }
+    .pulse-beacon {
+        display: inline-block;
+        animation: pulseAnimation 1.5s infinite;
+    }
+    @@keyframes pulseAnimation {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+    .emergency-dispatch-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        border: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .emergency-dispatch-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4) !important;
+    }
+</style>

@@ -8,7 +8,10 @@ namespace HospitalManagementSystem.Filters
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            if (context.HttpContext.Session.GetString("AdminAuthenticated") != "true")
+            var isAdmin = context.HttpContext.Session.GetString("AdminAuthenticated") == "true"
+                || string.Equals(context.HttpContext.Session.GetString("LoggedInUserRole"), "Admin", StringComparison.OrdinalIgnoreCase);
+
+            if (!isAdmin)
             {
                 context.Result = new RedirectToActionResult("Login", "Account", new
                 {
